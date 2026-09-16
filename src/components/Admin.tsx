@@ -29,8 +29,10 @@ import {
   Download,
   MessageCircle,
   Minus,
+  Settings,
 } from 'lucide-react';
 import type { Category, Customer, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import { AdminSettingsTab } from './AdminSettingsTab';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types';
 import { useToast } from './Toast';
 import { fileToResizedDataURL, formatSAR } from '@/utils';
@@ -83,7 +85,7 @@ const EMPTY_DRAFT: ProductDraft = {
 };
 
 export function Admin({ categories, products, onRefresh }: AdminProps) {
-  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers'>('products');
+  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'settings'>('products');
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -281,6 +283,9 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
           <TabButton active={tab === 'customers'} onClick={() => setTab('customers')} icon={<Users size={18} />}>
             العملاء
           </TabButton>
+          <TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={<Settings size={18} />}>
+            الإعدادات
+          </TabButton>
         </div>
       </div>
 
@@ -299,6 +304,8 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
           <OrdersAdminTab onRefresh={onRefresh} />
         ) : tab === 'customers' ? (
           <CustomersAdminTab />
+        ) : tab === 'settings' ? (
+          <AdminSettingsTab />
         ) : (
           <CategoriesTab
             categories={categories}

@@ -2,6 +2,7 @@ import { useHashRoute } from '@/hooks/useHashRoute';
 import { ToastProvider } from '@/components/Toast';
 import { Storefront } from '@/components/Storefront';
 import { Admin } from '@/components/Admin';
+import { AdminGate } from '@/components/AdminGate';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { Loader2 } from 'lucide-react';
 
@@ -36,7 +37,9 @@ export default function App() {
   return (
     <ToastProvider>
       {route === 'admin' ? (
-        <Admin categories={categories} products={products} onRefresh={refresh} />
+        <AdminGate>
+          <Admin categories={categories} products={products} onRefresh={refresh} />
+        </AdminGate>
       ) : (
         <Storefront categories={categories} products={products} />
       )}
