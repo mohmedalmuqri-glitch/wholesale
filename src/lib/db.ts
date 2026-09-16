@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { AppSettings, Category, Customer, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import type { AppSettings, Category, Customer, Delegate, GeographicZone, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 
 /* ---------------- Products ---------------- */
 
@@ -173,7 +173,8 @@ export async function insertCustomer(
   businessName: string,
   phone: string,
   latitude: number | null,
-  longitude: number | null
+  longitude: number | null,
+  zoneId: string | null = null
 ): Promise<Customer | null> {
   const { data: row, error } = await supabase
     .from('customers')
@@ -183,6 +184,7 @@ export async function insertCustomer(
       phone,
       latitude,
       longitude,
+      zone_id: zoneId,
     })
     .select('*')
     .maybeSingle();
@@ -199,6 +201,50 @@ export async function fetchAllCustomers(): Promise<Customer[]> {
 
   if (error) throw error;
   return (data ?? []) as Customer[];
+}
+
+/* ---------------- Geographic zones and delegates ---------------- */
+
+export async function fetchGeographicZones(): Promise<GeographicZone[]> {
+  const { data, error } = await supabase.from('geographic_zones').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as GeographicZone[];
+}
+
+export async function insertGeographicZone(name: string, description: string): Promise<GeographicZone | null> {
+  const { data, error } = await supabase
+    .from('geographic_zones')
+    .insert({ name, description })
+    .select('*')
+    .maybeSingle();
+  if (error) throw error;
+  return data as GeographicZone | null;
+}
+
+export async function deleteGeographicZone(id: string): Promise<void> {
+  const { error } = await supabase.from('geographic_zones').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function fetchDelegates(): Promise<Delegate[]> {
+  const { data, error } = await supabase.from('delegates').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Delegate[];
+}
+
+export async function insertDelegate(name: string, phone: string, zoneId: string): Promise<Delegate | null> {
+  const { data, error } = await supabase
+    .from('delegates')
+    .insert({ name, phone, zone_id: zoneId || null })
+    .select('*')
+    .maybeSingle();
+  if (error) throw error;
+  return data as Delegate | null;
+}
+
+export async function deleteDelegate(id: string): Promise<void> {
+  const { error } = await supabase.from('delegates').delete().eq('id', id);
+  if (error) throw error;
 }
 
 /* ---------------- App settings ---------------- */

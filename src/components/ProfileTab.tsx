@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   UserRound,
   Store,
@@ -11,8 +11,8 @@ import {
   ExternalLink,
   CheckCircle2,
 } from 'lucide-react';
-import type { Customer } from '@/types';
-import { insertCustomer } from '@/lib/db';
+import type { Customer, GeographicZone } from '@/types';
+import { insertCustomer, fetchGeographicZones } from '@/lib/db';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { STORAGE_KEYS } from '@/types';
 import { useToast } from './Toast';
@@ -31,8 +31,16 @@ export function ProfileTab({ customer, onSaved }: ProfileTabProps) {
   const [phone, setPhone] = useState(customer?.phone ?? '');
   const [lat, setLat] = useState<number | null>(customer?.latitude ?? null);
   const [lng, setLng] = useState<number | null>(customer?.longitude ?? null);
+  const [zoneId, setZoneId] = useState<string>(customer?.zone_id ?? '');
+  const [zones, setZones] = useState<GeographicZone[]>([]);
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchGeographicZones()
+      .then(setZones)
+      .catch(() => notify('تعذر تحميل المربعات الجغرافية', 'error'));
+  }, [notify]);
 
   const useGPS = () => {
     if (!navigator.geolocation) {
@@ -72,7 +80,8 @@ export function ProfileTab({ customer, onSaved }: ProfileTabProps) {
         businessName.trim(),
         phone.trim(),
         lat,
-        lng
+        lng,
+        zoneId || null
       );
       if (row) {
         onSaved(row);
@@ -138,6 +147,21 @@ export function ProfileTab({ customer, onSaved }: ProfileTabProps) {
               placeholder="05xxxxxxxx"
               className="w-full h-11 rounded-xl bg-sand-50 border border-sand-200 focus:border-violet-400 px-3 text-sm outline-none transition-all"
             />
+          </FormField>
+
+          <FormField label="المربع الجغرافي" icon={<MapPin size={18} />}>
+            <select
+              value={zoneId}
+              onChange={(e) => setZoneId(e.target.value)}
+              className="w-full h-11 rounded-xl bg-sand-50 border border-sand-200 focus:border-violet-400 px-3 text-sm outline-none transition-all"
+            >
+              <option value="">اختر المربع / الحي</option>
+              {zones.map((z) => (
+                <option key={z.id} value={z.id}>
+                  {z.name}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           {/* Location section */}

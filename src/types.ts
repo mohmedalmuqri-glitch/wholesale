@@ -73,6 +73,23 @@ export type Customer = {
   phone: string;
   latitude: number | null;
   longitude: number | null;
+  zone_id: string | null;
+  delegate_id: string | null;
+  created_at: string;
+};
+
+export type GeographicZone = {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+};
+
+export type Delegate = {
+  id: string;
+  name: string;
+  phone: string;
+  zone_id: string | null;
   created_at: string;
 };
 
