@@ -200,3 +200,36 @@ export async function fetchAllCustomers(): Promise<Customer[]> {
   if (error) throw error;
   return (data ?? []) as Customer[];
 }
+
+/* ---------------- App settings ---------------- */
+
+export async function fetchSettings(): Promise<AppSettings> {
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('*')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data ?? {
+    id: 1,
+    whatsapp_number: '967781995868',
+    admin_pin: '1234',
+    pin_required: true,
+    updated_at: new Date().toISOString(),
+  }) as AppSettings;
+}
+
+export async function updateSettings(
+  patch: Partial<Pick<AppSettings, 'whatsapp_number' | 'admin_pin' | 'pin_required'>>
+): Promise<AppSettings> {
+  const { data, error } = await supabase
+    .from('app_settings')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', 1)
+    .select('*')
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as AppSettings;
+}

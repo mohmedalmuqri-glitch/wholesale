@@ -285,6 +285,7 @@ export function Storefront({ categories, products }: StorefrontProps) {
         onDec={dec}
         onRemove={remove}
         onClear={clear}
+        onViewOrders={() => setActiveTab('orders')}
       />
 
       {/* Half-carton choice modal */}

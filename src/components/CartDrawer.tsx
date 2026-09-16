@@ -1,9 +1,9 @@
-import { ShoppingCart, Plus, Minus, Trash2, X, Loader2 } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, X, Loader2, CheckCircle2, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { CartItem, CartUnit, PaymentMethod, Product, OrderItem } from '@/types';
 import { formatSAR } from '@/utils';
 import { unitPrice, unitLabel } from '@/cartUtils';
-import { insertOrder } from '@/lib/db';
+import { insertOrder, fetchSettings } from '@/lib/db';
 import { useToast } from './Toast';
 
 type CartDrawerProps = {
@@ -19,9 +19,19 @@ type CartDrawerProps = {
   onDec: (productId: string, unit: CartUnit) => void;
   onRemove: (productId: string, unit: CartUnit) => void;
   onClear: () => void;
+  onViewOrders: () => void;
 };
 
 type CheckoutStage = 'idle' | 'submitting' | 'done';
+
+type CompletedOrder = {
+  id: string;
+  items: OrderItem[];
+  total: number;
+  area: string;
+  customerName: string;
+  customerPhone: string;
+};
 
 export function CartDrawer({
   open,
@@ -36,11 +46,13 @@ export function CartDrawer({
   onDec,
   onRemove,
   onClear,
+  onViewOrders,
 }: CartDrawerProps) {
   const { notify } = useToast();
   const [stage, setStage] = useState<CheckoutStage>('idle');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [area, setArea] = useState('');
+  const [completedOrder, setCompletedOrder] = useState<CompletedOrder | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -70,34 +82,86 @@ export function CartDrawer({
       qty: l.item.qty,
       price: unitPrice(l.product, l.item.unit),
     }));
-    if (!area.trim() && !customerArea.trim()) {
+    const finalArea = area.trim() || customerArea.trim();
+    if (!finalArea) {
       notify('الرجاء إدخال اسم المنطقة', 'error');
       return;
     }
     setStage('submitting');
     try {
-      await insertOrder(
+      const created = await insertOrder(
         customerId,
         customerName.trim(),
         customerPhone.trim(),
-        (area.trim() || customerArea.trim()),
+        finalArea,
         paymentMethod,
         orderItems,
         total
       );
-      setStage('done');
       onClear();
+      setCompletedOrder({
+        id: created?.id ?? '',
+        items: orderItems,
+        total,
+        area: finalArea,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+      });
+      setStage('done');
       notify('تم إرسال الطلب بنجاح');
-      setTimeout(() => {
-        setStage('idle');
-        setArea('');
-        onClose();
-      }, 1800);
     } catch (err) {
       setStage('idle');
       notify(err instanceof Error ? err.message : 'فشل إرسال الطلب', 'error');
     }
   };
+
+  const handleCloseSuccess = () => {
+    setStage('idle');
+    setArea('');
+    setCompletedOrder(null);
+    onClose();
+  };
+
+  const handleViewOrders = () => {
+    setStage('idle');
+    setArea('');
+    setCompletedOrder(null);
+    onClose();
+    onViewOrders();
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!completedOrder) return;
+    try {
+      const settings = await fetchSettings();
+      const waNumber = settings.whatsapp_number || '967781995868';
+      const orderNum = completedOrder.id
+        ? `ORD-${new Date().getFullYear()}-${completedOrder.id.slice(-4).toUpperCase()}`
+        : `ORD-${new Date().getFullYear()}-NEW`;
+      const itemsText = completedOrder.items
+        .map(
+          (i) =>
+            `• ${i.product_name} (${i.unit === 'half' ? 'نصف كرتون' : 'كرتون كامل'}) × ${i.qty} = ${formatSAR(i.price * i.qty)}`
+        )
+        .join('\n');
+      const message =
+        `*طلب جديد من بقالة تاجري*\n\n` +
+        `رقم الطلب: ${orderNum}\n` +
+        `اسم البقالة: ${completedOrder.customerName}\n` +
+        `رقم الجوال: ${completedOrder.customerPhone || '—'}\n` +
+        `المنطقة: ${completedOrder.area}\n\n` +
+        `*المنتجات:*\n${itemsText}\n\n` +
+        `*الإجمالي: ${formatSAR(completedOrder.total)} ر.ي*`;
+      const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    } catch {
+      notify('تعذر فتح واتساب', 'error');
+    }
+  };
+
+  const orderDisplayNumber = completedOrder
+    ? `ORD-${new Date().getFullYear()}-${completedOrder.id.slice(-4).toUpperCase().padStart(4, '0') || '0001'}`
+    : '';
 
   return (
     <>
@@ -105,7 +169,7 @@ export function CartDrawer({
         className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
-        onClick={onClose}
+        onClick={stage === 'done' ? handleCloseSuccess : onClose}
       />
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-[min(100vw,420px)] bg-sand-50 shadow-2xl transition-transform duration-300 flex flex-col ${
@@ -113,26 +177,62 @@ export function CartDrawer({
         }`}
         aria-hidden={!open}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-sand-200 bg-white">
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={22} className="text-brand-600" />
-            <h2 className="text-lg font-bold text-sand-800">سلة الشراء</h2>
-            {count > 0 && (
-              <span className="bg-brand-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                {count}
-              </span>
-            )}
+        {/* Header */}
+        {stage !== 'done' && (
+          <div className="flex items-center justify-between px-5 py-4 border-b border-sand-200 bg-white">
+            <div className="flex items-center gap-2">
+              <ShoppingCart size={22} className="text-brand-600" />
+              <h2 className="text-lg font-bold text-sand-800">سلة الشراء</h2>
+              {count > 0 && (
+                <span className="bg-brand-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                  {count}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="text-sand-400 hover:text-sand-800 transition-colors p-1"
+              aria-label="إغلاق السلة"
+            >
+              <X size={22} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-sand-400 hover:text-sand-800 transition-colors p-1"
-            aria-label="إغلاق السلة"
-          >
-            <X size={22} />
-          </button>
-        </div>
+        )}
 
-        {lines.length === 0 ? (
+        {/* Success screen */}
+        {stage === 'done' && completedOrder ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center bg-white">
+            <div className="w-24 h-24 rounded-full bg-green-50 flex items-center justify-center mb-6 animate-pop-in">
+              <CheckCircle2 size={56} className="text-green-500" strokeWidth={2} />
+            </div>
+            <h2 className="text-xl font-extrabold text-sand-900 mb-3">تم تأكيد طلبك بنجاح</h2>
+            {orderDisplayNumber && (
+              <p className="text-sm font-bold text-brand-700 bg-brand-50 px-4 py-1.5 rounded-full mb-4">
+                رقم الطلب: {orderDisplayNumber}
+              </p>
+            )}
+            <p className="text-sm text-sand-500 leading-relaxed mb-8 max-w-xs">
+              سيتم توصيل طلبك في الموعد المحدد. يمكنك متابعة الطلب من صفحة طلباتي.
+            </p>
+            <div className="w-full max-w-xs space-y-3">
+              <button
+                onClick={handleViewOrders}
+                className="w-full h-12 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors shadow-soft flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={18} />
+                عرض طلباتي
+              </button>
+              <button
+                onClick={handleSendWhatsApp}
+                className="w-full h-12 rounded-full text-white font-bold text-sm transition-colors shadow-soft flex items-center justify-center gap-2"
+                style={{ backgroundColor: '#E91E8C' }}
+              >
+                <MessageCircle size={18} />
+                ارسال الطلب عبر وستاب
+              </button>
+            </div>
+          </div>
+        ) : lines.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-sand-400 px-8 text-center">
             <ShoppingCart size={56} strokeWidth={1.2} />
             <p className="text-base font-medium">السلة فارغة</p>
@@ -207,64 +307,53 @@ export function CartDrawer({
                 <span className="text-xl font-extrabold text-sand-900">{formatSAR(total)}</span>
               </div>
 
-              {stage !== 'done' && (
-                <>
-                  <input
-                    type="text"
-                    value={area || customerArea}
-                    onChange={(e) => setArea(e.target.value)}
-                    placeholder="اسم المنطقة (مثل: حده)"
-                    className="w-full h-11 rounded-xl bg-sand-50 border border-sand-200 focus:border-brand-400 px-3 text-sm outline-none transition-all"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setPaymentMethod('cash')}
-                      className={`flex-1 h-10 rounded-xl font-bold text-sm transition-all ${
-                        paymentMethod === 'cash'
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-sand-50 border border-sand-200 text-sand-600'
-                      }`}
-                    >
-                      نقداً
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod('wallet')}
-                      className={`flex-1 h-10 rounded-xl font-bold text-sm transition-all ${
-                        paymentMethod === 'wallet'
-                          ? 'bg-brand-600 text-white'
-                          : 'bg-sand-50 border border-sand-200 text-sand-600'
-                      }`}
-                    >
-                      محفظة إلكترونية
-                    </button>
-                  </div>
-                </>
-              )}
+              <input
+                type="text"
+                value={area || customerArea}
+                onChange={(e) => setArea(e.target.value)}
+                placeholder="اسم المنطقة (مثل: حده)"
+                className="w-full h-11 rounded-xl bg-sand-50 border border-sand-200 focus:border-brand-400 px-3 text-sm outline-none transition-all"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`flex-1 h-10 rounded-xl font-bold text-sm transition-all ${
+                    paymentMethod === 'cash'
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-sand-50 border border-sand-200 text-sand-600'
+                  }`}
+                >
+                  نقداً
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('wallet')}
+                  className={`flex-1 h-10 rounded-xl font-bold text-sm transition-all ${
+                    paymentMethod === 'wallet'
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-sand-50 border border-sand-200 text-sand-600'
+                  }`}
+                >
+                  محفظة إلكترونية
+                </button>
+              </div>
 
-              {stage === 'done' ? (
-                <div className="flex items-center justify-center gap-2 h-11 text-green-600 font-bold text-sm">
-                  <ShoppingCart size={18} />
-                  تم إرسال طلبك بنجاح!
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={onClear}
-                    disabled={stage === 'submitting'}
-                    className="flex-1 h-11 rounded-full border border-sand-300 text-sand-700 font-bold text-sm hover:bg-sand-100 transition-colors"
-                  >
-                    تفريغ السلة
-                  </button>
-                  <button
-                    onClick={submitOrder}
-                    disabled={stage === 'submitting' || !customerId}
-                    className="flex-[2] h-11 rounded-full bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 text-white font-bold text-sm transition-colors shadow-soft flex items-center justify-center gap-2"
-                  >
-                    {stage === 'submitting' ? <Loader2 size={16} className="animate-spin" /> : null}
-                    {customerId ? 'تأكيد وإرسال الطلب' : 'سجل من "صفحتي" أولاً'}
-                  </button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={onClear}
+                  disabled={stage === 'submitting'}
+                  className="flex-1 h-11 rounded-full border border-sand-300 text-sand-700 font-bold text-sm hover:bg-sand-100 transition-colors"
+                >
+                  تفريغ السلة
+                </button>
+                <button
+                  onClick={submitOrder}
+                  disabled={stage === 'submitting' || !customerId}
+                  className="flex-[2] h-11 rounded-full bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 text-white font-bold text-sm transition-colors shadow-soft flex items-center justify-center gap-2"
+                >
+                  {stage === 'submitting' ? <Loader2 size={16} className="animate-spin" /> : null}
+                  {customerId ? 'تأكيد وإرسال الطلب' : 'سجل من "صفحتي" أولاً'}
+                </button>
+              </div>
             </div>
           </>
         )}
