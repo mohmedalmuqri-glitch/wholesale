@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import type { Category, Customer, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 import { AdminSettingsTab } from './AdminSettingsTab';
+import { CustomersAdminTab as CustomersManagementTab } from './CustomersAdminTab';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types';
 import { useToast } from './Toast';
 import { fileToResizedDataURL, formatSAR } from '@/utils';
@@ -303,7 +304,7 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
         ) : tab === 'orders' ? (
           <OrdersAdminTab onRefresh={onRefresh} />
         ) : tab === 'customers' ? (
-          <CustomersAdminTab />
+          <CustomersManagementTab />
         ) : tab === 'settings' ? (
           <AdminSettingsTab />
         ) : (
@@ -1661,187 +1662,6 @@ function ReportStat({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between">
       <span className="text-sm text-sand-500">{label}</span>
       <span className="text-base font-extrabold text-sand-900">{value}</span>
-    </div>
-  );
-}
-
-/* ---------------- Customers admin tab ---------------- */
-
-function CustomersAdminTab() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Customer | null>(null);
-  const { notify } = useToast();
-
-  const loadCustomers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchAllCustomers();
-      setCustomers(data);
-    } catch (err) {
-      notify(err instanceof Error ? err.message : 'فشل تحميل العملاء', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [notify]);
-
-  useEffect(() => {
-    loadCustomers();
-    const channel = supabase
-      .channel('admin-customers-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
-        loadCustomers();
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [loadCustomers]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-20 text-sand-400">
-        <Loader2 size={32} className="animate-spin text-brand-600" />
-        <p className="text-sm font-medium">جارٍ تحميل العملاء...</p>
-      </div>
-    );
-  }
-
-  if (customers.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-dashed border-sand-300 py-16 flex flex-col items-center text-sand-400">
-        <Users size={56} strokeWidth={1.2} className="mb-3" />
-        <p className="font-medium text-sand-600">لا يوجد عملاء مسجلون بعد</p>
-        <p className="text-sm mt-1">سيظهر العملاء الذين سجلوا بياناتهم من المتجر هنا</p>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="mb-4">
-        <h2 className="text-xl font-extrabold text-sand-900">جميع العملاء والمنشآت</h2>
-        <p className="text-sm text-sand-500 mt-0.5">{customers.length} عميل</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {customers.map((c) => (
-          <div
-            key={c.id}
-            className="bg-white rounded-2xl border border-sand-200 p-4 shadow-card hover:shadow-soft transition-all flex items-center gap-3 animate-fade-in"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
-              <Store size={22} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sand-800 truncate">{c.business_name || c.user_name}</p>
-              <p className="text-xs text-sand-400 mt-0.5 truncate">
-                {c.user_name && c.business_name ? c.user_name : c.phone || 'لا يوجد رقم'}
-              </p>
-              {c.latitude != null && c.longitude != null && (
-                <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                  <MapPin size={10} />
-                  موقع محدد
-                </span>
-              )}
-            </div>
-            <button
-              onClick={() => setSelected(c)}
-              className="shrink-0 flex items-center gap-1 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs px-3 h-9 rounded-full transition-colors"
-            >
-              بيانات المنشأة
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {selected && (
-        <CustomerDetailModal customer={selected} onClose={() => setSelected(null)} />
-      )}
-    </div>
-  );
-}
-
-function CustomerDetailModal({
-  customer,
-  onClose,
-}: {
-  customer: Customer;
-  onClose: () => void;
-}) {
-  const hasLocation = customer.latitude != null && customer.longitude != null;
-  const mapsUrl = hasLocation
-    ? `https://www.google.com/maps?q=${customer.latitude},${customer.longitude}`
-    : '';
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative bg-sand-50 w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl shadow-2xl animate-pop-in">
-        <div className="sticky top-0 bg-white border-b border-sand-200 px-5 py-4 flex items-center justify-between z-10">
-          <h2 className="font-extrabold text-lg text-sand-900">بيانات المنشأة</h2>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full text-sand-400 hover:bg-sand-100 flex items-center justify-center transition-colors"
-            aria-label="إغلاق"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="p-5 space-y-4">
-          <DetailRow icon={<Store size={18} />} label="اسم النشاط التجاري" value={customer.business_name || '—'} />
-          <DetailRow icon={<Users size={18} />} label="اسم المستخدم" value={customer.user_name || '—'} />
-          <DetailRow icon={<Phone size={18} />} label="رقم الهاتف" value={customer.phone || '—'} />
-
-          <div className="bg-white rounded-2xl border border-sand-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin size={18} className="text-brand-600" />
-              <span className="text-sm font-bold text-sand-700">الموقع</span>
-            </div>
-            {hasLocation ? (
-              <>
-                <p className="text-xs text-sand-500 mb-3 font-mono">
-                  {customer.latitude!.toFixed(6)}, {customer.longitude!.toFixed(6)}
-                </p>
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 h-11 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition-colors shadow-soft"
-                >
-                  <ExternalLink size={16} />
-                  فتح الموقع على Google Maps
-                </a>
-              </>
-            ) : (
-              <p className="text-sm text-sand-400">لم يتم تحديد موقع لهذا العميل</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DetailRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 bg-white rounded-2xl border border-sand-200 p-3.5">
-      <div className="w-10 h-10 rounded-xl bg-sand-50 text-sand-500 flex items-center justify-center shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-sand-400">{label}</p>
-        <p className="text-sm font-bold text-sand-800 truncate">{value}</p>
-      </div>
     </div>
   );
 }

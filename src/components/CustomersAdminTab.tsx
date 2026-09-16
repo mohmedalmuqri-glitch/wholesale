@@ -42,24 +42,19 @@ export function CustomersAdminTab() {
   const [sub, setSub] = useState<SubTab>('customers');
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <div>
-          <h2 className="text-xl font-extrabold text-sand-900">العملاء والمناديب والمربعات</h2>
-          <p className="text-sm text-sand-500 mt-0.5">إدارة العملاء، مناديب التوصيل، والمربعات الجغرافية</p>
+    <div dir="rtl" className="space-y-5">
+      <div className="w-full overflow-x-auto bg-white border-b border-sand-200">
+        <div className="min-w-max flex flex-row items-center justify-end gap-1 px-2 sm:px-5">
+          <SubTabButton active={sub === 'customers'} onClick={() => setSub('customers')}>
+            العملاء
+          </SubTabButton>
+          <SubTabButton active={sub === 'delegates'} onClick={() => setSub('delegates')}>
+            المناديب
+          </SubTabButton>
+          <SubTabButton active={sub === 'zones'} onClick={() => setSub('zones')}>
+            المربعات الجغرافية
+          </SubTabButton>
         </div>
-      </div>
-
-      <div className="bg-white border border-sand-200 rounded-2xl p-1 inline-flex gap-1 mb-5 shadow-sm">
-        <SubTabButton active={sub === 'customers'} onClick={() => setSub('customers')} icon={<Users size={16} />}>
-          العملاء
-        </SubTabButton>
-        <SubTabButton active={sub === 'delegates'} onClick={() => setSub('delegates')} icon={<Bike size={16} />}>
-          المناديب
-        </SubTabButton>
-        <SubTabButton active={sub === 'zones'} onClick={() => setSub('zones')} icon={<MapPin size={16} />}>
-          المربعات الجغرافية
-        </SubTabButton>
       </div>
 
       {sub === 'customers' && <CustomersList />}
@@ -74,22 +69,21 @@ export function CustomersAdminTab() {
 function SubTabButton({
   active,
   onClick,
-  icon,
   children,
 }: {
   active: boolean;
   onClick: () => void;
-  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 h-10 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
-        active ? 'bg-sand-900 text-white shadow-soft' : 'text-sand-600 hover:bg-sand-100'
+      className={`px-5 sm:px-7 h-12 text-base font-bold transition-all whitespace-nowrap border-b-2 ${
+        active
+          ? 'bg-blue-950 text-white border-blue-950 rounded-xl my-1 shadow-soft'
+          : 'text-sand-800 border-transparent hover:bg-sand-50'
       }`}
     >
-      {icon}
       {children}
     </button>
   );
