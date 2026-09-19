@@ -10,7 +10,10 @@ export default function App() {
   const route = useHashRoute();
   const { categories, products, loading, error, refresh } = useSupabaseData();
 
-  if (loading) {
+  // If we have cached data, show the UI immediately with a subtle refresh indicator
+  const hasData = categories.length > 0 || products.length > 0;
+
+  if (loading && !hasData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-sand-400">
         <Loader2 size={40} className="animate-spin text-brand-600" />
@@ -19,7 +22,7 @@ export default function App() {
     );
   }
 
-  if (error) {
+  if (error && !hasData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-red-500 px-6 text-center">
         <p className="text-base font-bold">تعذر الاتصال بقاعدة البيانات</p>
