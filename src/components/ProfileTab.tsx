@@ -10,6 +10,8 @@ import {
   Navigation,
   ExternalLink,
   CheckCircle2,
+  Download,
+  Check,
 } from 'lucide-react';
 import type { Customer, GeographicZone } from '@/types';
 import { insertCustomer, fetchGeographicZones } from '@/lib/db';
@@ -17,6 +19,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { STORAGE_KEYS } from '@/types';
 import { useToast } from './Toast';
 import { navigate } from '@/hooks/useHashRoute';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 type ProfileTabProps = {
   customer: Customer | null;
@@ -25,6 +28,8 @@ type ProfileTabProps = {
 
 export function ProfileTab({ customer, onSaved }: ProfileTabProps) {
   const { notify } = useToast();
+  const { canInstall, installed, promptInstall } = usePwaInstall();
+  const [installing, setInstalling] = useState(false);
   const [customerId] = useLocalStorage<string | null>(STORAGE_KEYS.customerId, null);
   const [userName, setUserName] = useState(customer?.user_name ?? '');
   const [businessName, setBusinessName] = useState(customer?.business_name ?? '');
@@ -207,6 +212,32 @@ export function ProfileTab({ customer, onSaved }: ProfileTabProps) {
             حفظ ومتابعة
           </button>
         </div>
+
+        {/* Install app */}
+        {installed ? (
+          <div className="mt-4 flex items-center justify-center gap-2 h-12 rounded-full bg-green-50 border border-green-200 text-green-700 font-bold text-sm">
+            <Check size={18} />
+            التطبيق مثبت على جهازك
+          </div>
+        ) : canInstall ? (
+          <button
+            onClick={async () => {
+              setInstalling(true);
+              const ok = await promptInstall();
+              setInstalling(false);
+              notify(ok ? 'تم تثبيت التطبيق بنجاح' : 'تم إلغاء التثبيت', ok ? 'success' : 'info');
+            }}
+            disabled={installing}
+            className="w-full mt-4 flex items-center justify-center gap-2 h-12 rounded-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold text-sm transition-colors shadow-soft active:scale-95"
+          >
+            {installing ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+            تثبيت التطبيق على الجهاز
+          </button>
+        ) : (
+          <div className="mt-4 flex items-center justify-center gap-2 h-12 rounded-full bg-sand-100 border border-sand-200 text-sand-500 font-bold text-xs text-center px-4">
+            لتثبيت التطبيق: من قائمة المتصفح اختر «إضافة إلى الشاشة الرئيسية»
+          </div>
+        )}
 
         {/* Admin link */}
         <button
