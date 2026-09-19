@@ -2,7 +2,9 @@
   "name": "شعوب",
   "short_name": "شعوب",
   "description": "منصة شعوب للتجارة والطلب بالجملة",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f7f7f6",
   "theme_color": "#0f3155",
@@ -10,10 +12,10 @@
   "lang": "ar",
   "icons": [
     {
-      "src": "/1789845472951.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
     }
   ]
 }

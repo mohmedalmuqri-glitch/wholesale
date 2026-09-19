@@ -158,7 +158,7 @@ export function Storefront({ categories, products }: StorefrontProps) {
             className="flex items-center gap-2 text-right transition-transform active:scale-95"
             aria-label="الرئيسية"
           >
-            <img src="/1789845472951.png" alt="شعار شعوب" className="h-11 w-11 rounded-xl object-cover" />
+            <img src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg" alt="شعار شعوب" className="h-11 w-11 rounded-xl object-cover" />
             <span className="leading-none">
               <strong className="block font-display text-lg font-extrabold tracking-tight text-sand-900">شعوب</strong>
               <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.22em] text-orange-500">SHOU'UB</span>
@@ -332,7 +332,7 @@ function HomeTab({
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
       <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
         <img
-          src="/1789845472951.png"
+          src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg"
           alt=""
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"

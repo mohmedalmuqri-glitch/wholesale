@@ -1,9 +1,11 @@
-const CACHE = 'shouub-v1';
-const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/1789845472951.png'];
+const CACHE = 'shouub-v2';
+const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((cache) => Promise.all(ASSETS.map((asset) => cache.add(asset).catch(() => undefined))))
+      .then(() => self.skipWaiting())
   );
 });
 
