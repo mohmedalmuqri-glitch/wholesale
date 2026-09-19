@@ -1,5 +1,13 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { Search, ShoppingCart, Store, Package, Check } from 'lucide-react';
+import {
+  Bell,
+  CircleHelp,
+  Search,
+  ShoppingCart,
+  Store,
+  Package,
+  Check,
+} from 'lucide-react';
 import type { CartItem, Category, CartUnit, Customer, Product } from '@/types';
 import { CART_BLUE, STORAGE_KEYS } from '@/types';
 import { formatSAR } from '@/utils';
@@ -19,7 +27,7 @@ type StorefrontProps = {
 export function Storefront({ categories, products }: StorefrontProps) {
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<BottomTab>('store');
+  const [activeTab, setActiveTab] = useState<BottomTab>('home');
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useLocalStorage<CartItem[]>(STORAGE_KEYS.cart, []);
   const [customerId, setCustomerId] = useLocalStorage<string | null>(STORAGE_KEYS.customerId, null);
@@ -142,71 +150,80 @@ export function Storefront({ categories, products }: StorefrontProps) {
 
   return (
     <div className="min-h-screen bg-sand-50">
-      {/* Header + search + categories — only on store tab */}
-      {activeTab === 'store' && (
-        <>
-          <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-sand-200">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-10 h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-soft">
-                    <Store size={22} />
-                  </div>
-                  <div className="hidden sm:block">
-                    <h1 className="font-display font-extrabold text-lg leading-none text-sand-900">
-                      منصة الجملة
-                    </h1>
-                    <p className="text-[11px] text-sand-500 mt-0.5">تجارة المواد الغذائية</p>
-                  </div>
-                </div>
+      <header className="sticky top-0 z-30 border-b border-sand-200 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-2 text-right transition-transform active:scale-95"
+            aria-label="الرئيسية"
+          >
+            <img src="/1789845472951.png" alt="شعار شعوب" className="h-11 w-11 rounded-xl object-cover" />
+            <span className="leading-none">
+              <strong className="block font-display text-lg font-extrabold tracking-tight text-sand-900">شعوب</strong>
+              <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.22em] text-orange-500">SHOU'UB</span>
+            </span>
+          </button>
 
-                <div className="flex-1 relative">
-                  <Search
-                    size={18}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sand-400 pointer-events-none"
-                  />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="ابحث عن منتج..."
-                    className="w-full h-11 rounded-full bg-sand-100 border border-transparent focus:border-brand-400 focus:bg-white pr-10 pl-4 text-sm text-sand-800 placeholder:text-sand-400 outline-none transition-all"
-                  />
-                </div>
-
-                <button
-                  onClick={() => setCartOpen(true)}
-                  className="relative w-11 h-11 rounded-full bg-brand-600 hover:bg-brand-700 text-white flex items-center justify-center transition-colors shadow-soft shrink-0"
-                  aria-label="السلة"
-                >
-                  <ShoppingCart size={20} />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -left-1 bg-red-500 text-white text-[11px] font-bold min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center border-2 border-white animate-pop-in">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4">
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
-              <Chip active={activeCat === 'all'} onClick={() => setActiveCat('all')}>
-                الكل
-              </Chip>
-              {categories.map((c) => (
-                <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)}>
-                  {c.name}
-                </Chip>
-              ))}
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => notify('لا توجد إشعارات جديدة حالياً')}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-sand-200 bg-white text-sand-600 transition hover:border-brand-300 hover:text-brand-700"
+              aria-label="الإشعارات"
+            >
+              <Bell size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')}
+              className="hidden h-10 items-center gap-2 rounded-full border border-sand-200 bg-white px-3 text-xs font-bold text-sand-600 transition hover:border-brand-300 hover:text-brand-700 sm:flex"
+            >
+              <CircleHelp size={17} />
+              الدعم
+            </button>
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-brand-700 text-white shadow-soft transition hover:bg-brand-800 active:scale-95"
+              aria-label="السلة"
+            >
+              <ShoppingCart size={18} />
+              {cartCount > 0 && (
+                <span className="absolute -left-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-orange-500 px-1 text-[10px] font-bold text-white animate-pop-in">
+                  {cartCount}
+                </span>
+              )}
+            </button>
           </div>
-        </>
+        </div>
+      </header>
+
+      {activeTab === 'store' && (
+        <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6">
+          <div className="relative mb-2">
+            <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sand-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ابحث عن منتج..."
+              className="h-11 w-full rounded-full border border-transparent bg-sand-100 pl-4 pr-10 text-sm text-sand-800 outline-none transition-all placeholder:text-sand-400 focus:border-brand-400 focus:bg-white"
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+            <Chip active={activeCat === 'all'} onClick={() => setActiveCat('all')}>الكل</Chip>
+            {categories.map((c) => (
+              <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)}>{c.name}</Chip>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Tab content */}
-      {activeTab === 'store' ? (
+      {activeTab === 'home' ? (
+        <HomeTab productsCount={products.length} onShop={() => setActiveTab('store')} onSupport={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')} />
+      ) : activeTab === 'store' ? (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 pb-32">
           {filtered.length === 0 ? (
             <EmptyState query={query} hasProducts={products.length > 0} />
@@ -299,6 +316,71 @@ export function Storefront({ categories, products }: StorefrontProps) {
         />
       )}
     </div>
+  );
+}
+
+function HomeTab({
+  productsCount,
+  onShop,
+  onSupport,
+}: {
+  productsCount: number;
+  onShop: () => void;
+  onSupport: () => void;
+}) {
+  return (
+    <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
+      <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
+        <img
+          src="/1789845472951.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"
+        />
+        <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
+        <div className="relative flex min-h-[250px] flex-col justify-center p-6 text-white sm:p-10">
+          <span className="mb-4 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold text-orange-200">
+            منصة شعوب للتجارة
+          </span>
+          <h1 className="max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+            كل احتياجاتك بالجملة، في مكان واحد
+          </h1>
+          <p className="mt-3 max-w-sm text-sm leading-7 text-white/75">
+            اكتشف المنتجات، اطلب بسهولة، وتابع طلباتك من البداية حتى التوصيل.
+          </p>
+          <button
+            type="button"
+            onClick={onShop}
+            className="mt-6 flex h-11 w-fit items-center rounded-full bg-orange-500 px-6 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+          >
+            ابدأ التسوق
+          </button>
+        </div>
+      </section>
+
+      <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-sand-200 bg-white p-4 shadow-card">
+          <p className="text-2xl font-extrabold text-brand-700">{productsCount}</p>
+          <p className="mt-1 text-xs font-bold text-sand-500">منتج متاح</p>
+        </div>
+        <button
+          type="button"
+          onClick={onShop}
+          className="rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-brand-300"
+        >
+          <Store className="text-brand-700" size={22} />
+          <p className="mt-2 text-xs font-bold text-sand-700">تصفح المتجر</p>
+        </button>
+        <button
+          type="button"
+          onClick={onSupport}
+          className="col-span-2 rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-orange-300 sm:col-span-1"
+        >
+          <CircleHelp className="text-orange-500" size={22} />
+          <p className="mt-2 text-xs font-bold text-sand-700">تحتاج مساعدة؟</p>
+        </button>
+      </section>
+    </main>
   );
 }
 
