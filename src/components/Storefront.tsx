@@ -8,7 +8,7 @@ import {
   Package,
   Check,
 } from 'lucide-react';
-import type { CartItem, Category, CartUnit, Customer, Product } from '@/types';
+import type { CartItem, Category, CartUnit, Customer, Product, AppBanner } from '@/types';
 import { CART_BLUE, STORAGE_KEYS } from '@/types';
 import { formatSAR } from '@/utils';
 import { CartDrawer } from './CartDrawer';
@@ -18,6 +18,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from './Toast';
 import { BottomNav, type BottomTab } from './BottomNav';
 import { supabase } from '@/lib/supabase';
+import { useBanners } from '@/hooks/useBanners';
 
 type StorefrontProps = {
   categories: Category[];
@@ -36,6 +37,7 @@ export function Storefront({ categories, products }: StorefrontProps) {
   const [choiceUnit, setChoiceUnit] = useState<CartUnit>('full');
   const [orderRefreshKey, setOrderRefreshKey] = useState(0);
   const { notify } = useToast();
+  const { banners } = useBanners();
 
   // Load customer data when customerId is available
   const refreshCustomer = useCallback(async () => {
@@ -222,7 +224,15 @@ export function Storefront({ categories, products }: StorefrontProps) {
 
       {/* Tab content */}
       {activeTab === 'home' ? (
-        <HomeTab productsCount={products.length} onShop={() => setActiveTab('store')} onSupport={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')} />
+        <HomeTab
+          productsCount={products.length}
+          banner={banners.home ?? null}
+          onShop={() => setActiveTab('store')}
+          onOffers={() => setActiveTab('offers')}
+          onSupport={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')}
+        />
+      ) : activeTab === 'offers' ? (
+        <OffersTab banner={banners.offers ?? null} onShop={() => setActiveTab('store')} />
       ) : activeTab === 'store' ? (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 pb-32">
           {filtered.length === 0 ? (

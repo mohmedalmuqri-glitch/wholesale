@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { AppSettings, Category, Customer, Delegate, GeographicZone, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, GeographicZone, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 
 /* ---------------- Products ---------------- */
 
@@ -278,4 +278,58 @@ export async function updateSettings(
 
   if (error) throw error;
   return data as AppSettings;
+}
+
+/* ---------------- App banners ---------------- */
+
+export async function fetchBanners(): Promise<AppBanner[]> {
+  const { data, error } = await supabase
+    .from('app_banners')
+    .select('id,image_url,storage_path,alt_text,updated_at');
+  if (error) throw error;
+  return (data ?? []) as AppBanner[];
+}
+
+export async function fetchBanner(id: BannerId): Promise<AppBanner | null> {
+  const { data, error } = await supabase
+    .from('app_banners')
+    .select('id,image_url,storage_path,alt_text,updated_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data as AppBanner | null;
+}
+
+export async function uploadBannerImage(
+  id: BannerId,
+  file: File
+): Promise<{ url: string; path: string }> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const path = `${id}/${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage
+    .from('banners')
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+  if (upErr) throw upErr;
+  const { data: pub } = supabase.storage.from('banners').getPublicUrl(path);
+  return { url: pub.publicUrl, path };
+}
+
+export async function updateBanner(
+  id: BannerId,
+  patch: Partial<Pick<AppBanner, 'image_url' | 'storage_path' | 'alt_text'>>
+): Promise<AppBanner> {
+  const { data, error } = await supabase
+    .from('app_banners')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .maybeSingle();
+  if (error) throw error;
+  return data as AppBanner;
+}
+
+export async function deleteBannerImage(path: string): Promise<void> {
+  if (!path) return;
+  const { error } = await supabase.storage.from('banners').remove([path]);
+  if (error) throw error;
 }

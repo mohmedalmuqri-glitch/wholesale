@@ -115,3 +115,13 @@ export type AppSettings = {
   pin_required: boolean;
   updated_at: string;
 };
+
+export type BannerId = 'home' | 'offers';
+
+export type AppBanner = {
+  id: BannerId;
+  image_url: string;
+  storage_path: string;
+  alt_text: string;
+  updated_at: string;
+};
