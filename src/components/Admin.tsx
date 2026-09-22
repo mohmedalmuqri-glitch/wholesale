@@ -50,7 +50,12 @@ import {
   fetchAllCustomers,
   updateOrderStatus,
   updateOrder,
+  fetchBanners,
+  uploadBannerImage,
+  updateBanner,
+  deleteBannerImage,
 } from '@/lib/db';
+import type { AppBanner, BannerId } from '@/types';
 
 type AdminProps = {
   categories: Category[];
@@ -86,7 +91,7 @@ const EMPTY_DRAFT: ProductDraft = {
 };
 
 export function Admin({ categories, products, onRefresh }: AdminProps) {
-  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'settings'>('products');
+  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'banners' | 'settings'>('products');
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -284,6 +289,9 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
           <TabButton active={tab === 'customers'} onClick={() => setTab('customers')} icon={<Users size={18} />}>
             العملاء
           </TabButton>
+          <TabButton active={tab === 'banners'} onClick={() => setTab('banners')} icon={<ImageIcon size={18} />}>
+            إدارة البانرات
+          </TabButton>
           <TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={<Settings size={18} />}>
             الإعدادات
           </TabButton>
@@ -305,6 +313,8 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
           <OrdersAdminTab onRefresh={onRefresh} />
         ) : tab === 'customers' ? (
           <CustomersManagementTab />
+        ) : tab === 'banners' ? (
+          <BannersAdminTab />
         ) : tab === 'settings' ? (
           <AdminSettingsTab />
         ) : (
@@ -1997,6 +2007,195 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label className="block text-sm font-bold text-sand-700 mb-1.5">{label}</label>
       {children}
+    </div>
+  );
+}
+
+/* ---------------- Banners admin tab ---------------- */
+
+function BannersAdminTab() {
+  const { notify } = useToast();
+  const [banners, setBanners] = useState<Record<BannerId, AppBanner | null>>({
+    home: null,
+    offers: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [uploadingId, setUploadingId] = useState<BannerId | null>(null);
+  const fileRefs = useRef<Record<BannerId, HTMLInputElement | null>>({
+    home: null,
+    offers: null,
+  });
+
+  useEffect(() => {
+    fetchBanners()
+      .then((rows) => {
+        const map: Record<BannerId, AppBanner | null> = { home: null, offers: null };
+        for (const r of rows) map[r.id] = r;
+        setBanners(map);
+      })
+      .catch(() => notify('تعذر تحميل البانرات', 'error'))
+      .finally(() => setLoading(false));
+  }, [notify]);
+
+  const handleUpload = async (id: BannerId, file: File) => {
+    if (!file.type.startsWith('image/')) {
+      notify('الرجاء اختيار ملف صورة فقط', 'error');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      notify('حجم الصورة يجب أن يكون أقل من 10 ميجابايت', 'error');
+      return;
+    }
+    setUploadingId(id);
+    try {
+      const existing = banners[id];
+      const { url, path } = await uploadBannerImage(id, file);
+      await updateBanner(id, { image_url: url, storage_path: path });
+      if (existing?.storage_path) {
+        await deleteBannerImage(existing.storage_path).catch(() => undefined);
+      }
+      const updated = await fetchBanners();
+      const map: Record<BannerId, AppBanner | null> = { home: null, offers: null };
+      for (const r of updated) map[r.id] = r;
+      setBanners(map);
+      notify('تم رفع البانر بنجاح');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'فشل رفع البانر', 'error');
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const handleRemove = async (id: BannerId) => {
+    const banner = banners[id];
+    if (!banner?.image_url) return;
+    if (!window.confirm('حذف صورة البانر؟')) return;
+    try {
+      if (banner.storage_path) {
+        await deleteBannerImage(banner.storage_path);
+      }
+      await updateBanner(id, { image_url: '', storage_path: '' });
+      setBanners((prev) => ({
+        ...prev,
+        [id]: { ...prev[id]!, image_url: '', storage_path: '' },
+      }));
+      notify('تم حذف البانر', 'info');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'فشل حذف البانر', 'error');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[360px] flex items-center justify-center text-brand-600">
+        <Loader2 size={30} className="animate-spin" />
+      </div>
+    );
+  }
+
+  const bannerLabels: Record<BannerId, string> = {
+    home: 'بانر الصفحة الرئيسية',
+    offers: 'بانر صفحة العروض',
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-5" dir="rtl">
+      <div>
+        <h2 className="text-xl font-extrabold text-sand-900">إدارة البانرات</h2>
+        <p className="text-sm text-sand-500 mt-1">
+          ارفع وعدّل بانر الصفحة الرئيسية وبانر العروض. تظهر الصور فوراً في التطبيق.
+        </p>
+      </div>
+
+      {(['home', 'offers'] as BannerId[]).map((id) => {
+        const banner = banners[id];
+        const uploading = uploadingId === id;
+        return (
+          <section
+            key={id}
+            className="bg-white rounded-3xl border border-sand-200 shadow-card p-5 sm:p-7"
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+                <ImageIcon size={22} />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-sand-900">{bannerLabels[id]}</h3>
+                <p className="mt-0.5 text-xs text-sand-500">
+                  يظهر في {id === 'home' ? 'الصفحة الرئيسية' : 'صفحة العروض'}
+                </p>
+              </div>
+            </div>
+
+            <input
+              ref={(el) => {
+                fileRefs.current[id] = el;
+              }}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUpload(id, file);
+                e.target.value = '';
+              }}
+            />
+
+            {banner?.image_url ? (
+              <div className="space-y-3">
+                <div className="relative overflow-hidden rounded-2xl border border-sand-200">
+                  <img
+                    src={banner.image_url}
+                    alt={banner.alt_text || bannerLabels[id]}
+                    className="max-h-[200px] w-full object-cover"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileRefs.current[id]?.click()}
+                    disabled={uploading}
+                    className="flex h-10 items-center gap-2 rounded-full bg-brand-600 px-4 text-sm font-bold text-white transition hover:bg-brand-700 disabled:bg-brand-300"
+                  >
+                    {uploading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Upload size={16} />
+                    )}
+                    تغيير الصورة
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(id)}
+                    disabled={uploading}
+                    className="flex h-10 items-center gap-2 rounded-full border border-red-200 px-4 text-sm font-bold text-red-600 transition hover:bg-red-50"
+                  >
+                    <Trash2 size={16} />
+                    حذف
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRefs.current[id]?.click()}
+                disabled={uploading}
+                className="flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sand-300 py-12 text-sand-400 transition hover:border-brand-400 hover:text-brand-600 disabled:opacity-50"
+              >
+                {uploading ? (
+                  <Loader2 size={28} className="animate-spin text-brand-600" />
+                ) : (
+                  <Upload size={28} />
+                )}
+                <p className="mt-2 text-sm font-bold text-sand-600">
+                  {uploading ? 'جارٍ الرفع...' : 'اضغط لرفع صورة البانر'}
+                </p>
+                <p className="mt-1 text-xs text-sand-400">JPG, PNG, WebP - أقل من 10 ميجابايت</p>
+              </button>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

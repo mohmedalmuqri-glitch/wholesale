@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   Bell,
   CircleHelp,
+  Percent,
   Search,
   ShoppingCart,
   Store,
@@ -331,42 +332,51 @@ export function Storefront({ categories, products }: StorefrontProps) {
 
 function HomeTab({
   productsCount,
+  banner,
   onShop,
+  onOffers,
   onSupport,
 }: {
   productsCount: number;
+  banner: AppBanner | null;
   onShop: () => void;
+  onOffers: () => void;
   onSupport: () => void;
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
-      <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
-        <img
-          src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"
-        />
-        <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="relative flex min-h-[250px] flex-col justify-center p-6 text-white sm:p-10">
-          <span className="mb-4 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold text-orange-200">
-            منصة شعوب للتجارة
-          </span>
-          <h1 className="max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-            كل احتياجاتك بالجملة، في مكان واحد
-          </h1>
-          <p className="mt-3 max-w-sm text-sm leading-7 text-white/75">
-            اكتشف المنتجات، اطلب بسهولة، وتابع طلباتك من البداية حتى التوصيل.
-          </p>
-          <button
-            type="button"
-            onClick={onShop}
-            className="mt-6 flex h-11 w-fit items-center rounded-full bg-orange-500 px-6 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
-          >
-            ابدأ التسوق
-          </button>
-        </div>
-      </section>
+      {/* Dynamic banner or fallback hero */}
+      {banner?.image_url ? (
+        <BannerDisplay banner={banner} onShop={onShop} />
+      ) : (
+        <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
+          <img
+            src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"
+          />
+          <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
+          <div className="relative flex min-h-[250px] flex-col justify-center p-6 text-white sm:p-10">
+            <span className="mb-4 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold text-orange-200">
+              منصة شعوب للتجارة
+            </span>
+            <h1 className="max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+              كل احتياجاتك بالجملة، في مكان واحد
+            </h1>
+            <p className="mt-3 max-w-sm text-sm leading-7 text-white/75">
+              اكتشف المنتجات، اطلب بسهولة، وتابع طلباتك من البداية حتى التوصيل.
+            </p>
+            <button
+              type="button"
+              onClick={onShop}
+              className="mt-6 flex h-11 w-fit items-center rounded-full bg-orange-500 px-6 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+            >
+              ابدأ التسوق
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-sand-200 bg-white p-4 shadow-card">
@@ -375,11 +385,11 @@ function HomeTab({
         </div>
         <button
           type="button"
-          onClick={onShop}
-          className="rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-brand-300"
+          onClick={onOffers}
+          className="rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-orange-300"
         >
-          <Store className="text-brand-700" size={22} />
-          <p className="mt-2 text-xs font-bold text-sand-700">تصفح المتجر</p>
+          <Percent className="text-orange-500" size={22} />
+          <p className="mt-2 text-xs font-bold text-sand-700">العروض الحصرية</p>
         </button>
         <button
           type="button"
@@ -391,6 +401,96 @@ function HomeTab({
         </button>
       </section>
     </main>
+  );
+}
+
+/* ---------------- Offers tab ---------------- */
+
+function OffersTab({
+  banner,
+  onShop,
+}: {
+  banner: AppBanner | null;
+  onShop: () => void;
+}) {
+  return (
+    <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
+      <BannerDisplay banner={banner} onShop={onShop} rounded={false} minHeight={220} />
+
+      <div className="mt-6">
+        <h2 className="mb-3 text-lg font-extrabold text-sand-900">عروض شعوب</h2>
+        <div className="rounded-2xl border border-dashed border-sand-300 bg-white py-16 text-center shadow-card">
+          <Percent size={48} strokeWidth={1.2} className="mx-auto mb-3 text-orange-400" />
+          <p className="font-bold text-sand-600">لا توجد عروض مضافة حالياً</p>
+          <p className="mt-1 text-sm text-sand-400">سيتم عرض المنتجات المخفّضة هنا قريباً</p>
+          <button
+            type="button"
+            onClick={onShop}
+            className="mt-4 inline-flex h-10 items-center rounded-full bg-brand-600 px-5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-95"
+          >
+            تصفح المتجر
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/* ---------------- Banner display ---------------- */
+
+function BannerDisplay({
+  banner,
+  onShop,
+  rounded = true,
+  minHeight = 250,
+}: {
+  banner: AppBanner | null;
+  onShop?: () => void;
+  rounded?: boolean;
+  minHeight?: number;
+}) {
+  if (banner?.image_url) {
+    return (
+      <section
+        className={`relative mt-4 overflow-hidden shadow-soft ${rounded ? 'rounded-[28px]' : ''}`}
+        style={{ minHeight }}
+      >
+        <img
+          src={banner.image_url}
+          alt={banner.alt_text || 'بانر'}
+          className="w-full object-cover"
+          style={{ minHeight }}
+        />
+        {onShop && (
+          <button
+            type="button"
+            onClick={onShop}
+            className="absolute bottom-4 right-4 flex h-11 items-center rounded-full bg-orange-500 px-6 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+          >
+            تسوّق الآن
+          </button>
+        )}
+      </section>
+    );
+  }
+
+  // Fallback placeholder for offers tab when no banner is set
+  return (
+    <section
+      className={`relative mt-4 flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand-700 to-brand-900 shadow-soft ${
+        rounded ? 'rounded-[28px]' : ''
+      }`}
+      style={{ minHeight }}
+    >
+      <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="relative p-6 text-center text-white">
+        <Percent size={40} className="mx-auto mb-3 text-orange-300" />
+        <h2 className="font-display text-xl font-extrabold sm:text-2xl">بانر العروض</h2>
+        <p className="mt-2 text-xs text-white/70">
+          سيظهر بانر العروض هنا بعد رفع الصورة من لوحة التحكم
+        </p>
+      </div>
+    </section>
   );
 }
 
