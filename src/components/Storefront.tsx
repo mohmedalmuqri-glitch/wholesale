@@ -152,18 +152,16 @@ export function Storefront({ categories, products }: StorefrontProps) {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-sand-50">
+    <div className="min-h-screen bg-sand-50">
       <header className="sticky top-0 z-30 border-b border-sand-200 bg-white/95 backdrop-blur-md">
-        <div dir="rtl" className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <button
             type="button"
             onClick={() => setActiveTab('home')}
             className="flex items-center gap-2 text-right transition-transform active:scale-95"
             aria-label="الرئيسية"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sand-900 text-lg font-black text-white shadow-sm">
-              ش
-            </span>
+            <img src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg" alt="شعار شعوب" className="h-11 w-11 rounded-xl object-cover" />
             <span className="leading-none">
               <strong className="block font-display text-lg font-extrabold tracking-tight text-sand-900">شعوب</strong>
               <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.22em] text-orange-500">SHOU'UB</span>
@@ -352,9 +350,11 @@ function HomeTab({
         <BannerDisplay banner={banner} onShop={onShop} />
       ) : (
         <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
-          <div
+          <img
+            src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg"
+            alt=""
             aria-hidden="true"
-            className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(249,115,22,0.28),transparent_32%),linear-gradient(135deg,#12395d,#0f3155)]"
+            className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"
           />
           <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
           <div className="relative flex min-h-[250px] flex-col justify-center p-6 text-white sm:p-10">
@@ -415,7 +415,7 @@ function OffersTab({
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
-      <BannerDisplay banner={banner} onShop={onShop} rounded={false} minHeight={220} showDots />
+      <BannerDisplay banner={banner} onShop={onShop} rounded={false} minHeight={220} />
 
       <div className="mt-6">
         <h2 className="mb-3 text-lg font-extrabold text-sand-900">عروض شعوب</h2>
@@ -443,24 +443,22 @@ function BannerDisplay({
   onShop,
   rounded = true,
   minHeight = 250,
-  showDots = false,
 }: {
   banner: AppBanner | null;
   onShop?: () => void;
   rounded?: boolean;
   minHeight?: number;
-  showDots?: boolean;
 }) {
   if (banner?.image_url) {
     return (
       <section
-        className={`relative mt-4 overflow-visible shadow-soft ${rounded ? 'rounded-[28px]' : ''}`}
-        style={{ minHeight, aspectRatio: '2.2 / 1' }}
+        className={`relative mt-4 overflow-hidden shadow-soft ${rounded ? 'rounded-[28px]' : ''}`}
+        style={{ minHeight }}
       >
         <img
           src={banner.image_url}
           alt={banner.alt_text || 'بانر'}
-          className={`h-full w-full object-cover ${rounded ? 'rounded-[28px]' : ''}`}
+          className="w-full object-cover"
           style={{ minHeight }}
         />
         {onShop && (
@@ -472,13 +470,6 @@ function BannerDisplay({
             تسوّق الآن
           </button>
         )}
-        {showDots && (
-          <div className="absolute bottom-[-18px] left-1/2 flex -translate-x-1/2 items-center gap-2">
-            <span className="h-2.5 w-10 rounded-full bg-brand-500" />
-            <span className="h-2.5 w-2.5 rounded-full bg-sand-300" />
-            <span className="h-2.5 w-2.5 rounded-full bg-sand-300" />
-          </div>
-        )}
       </section>
     );
   }
@@ -489,7 +480,7 @@ function BannerDisplay({
       className={`relative mt-4 flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand-700 to-brand-900 shadow-soft ${
         rounded ? 'rounded-[28px]' : ''
       }`}
-      style={{ minHeight, aspectRatio: '2.2 / 1' }}
+      style={{ minHeight }}
     >
       <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
       <div className="relative p-6 text-center text-white">
@@ -499,13 +490,6 @@ function BannerDisplay({
           سيظهر بانر العروض هنا بعد رفع الصورة من لوحة التحكم
         </p>
       </div>
-      {showDots && (
-        <div className="absolute bottom-[-18px] left-1/2 flex -translate-x-1/2 items-center gap-2">
-          <span className="h-2.5 w-10 rounded-full bg-brand-500" />
-          <span className="h-2.5 w-2.5 rounded-full bg-sand-300" />
-          <span className="h-2.5 w-2.5 rounded-full bg-sand-300" />
-        </div>
-      )}
     </section>
   );
 }
