@@ -280,32 +280,27 @@ export async function updateSettings(
   return data as AppSettings;
 }
 
-/* ---------------- App banners ---------------- */
+/* ---------------- Banner slides ---------------- */
+
+const BANNER_FIELDS = 'id,placement,image_url,storage_path,alt_text,sort_order,is_active,created_at,updated_at';
 
 export async function fetchBanners(): Promise<AppBanner[]> {
   const { data, error } = await supabase
-    .from('app_banners')
-    .select('id,image_url,storage_path,alt_text,updated_at');
+    .from('app_banner_slides')
+    .select(BANNER_FIELDS)
+    .order('placement', { ascending: true })
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []) as AppBanner[];
 }
 
-export async function fetchBanner(id: BannerId): Promise<AppBanner | null> {
-  const { data, error } = await supabase
-    .from('app_banners')
-    .select('id,image_url,storage_path,alt_text,updated_at')
-    .eq('id', id)
-    .maybeSingle();
-  if (error) throw error;
-  return data as AppBanner | null;
-}
-
 export async function uploadBannerImage(
-  id: BannerId,
+  placement: BannerId,
   file: File
 ): Promise<{ url: string; path: string }> {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const path = `${id}/${Date.now()}.${ext}`;
+  const path = `${placement}/${crypto.randomUUID()}.${ext}`;
   const { error: upErr } = await supabase.storage
     .from('banners')
     .upload(path, file, { cacheControl: '3600', upsert: false });
@@ -314,18 +309,54 @@ export async function uploadBannerImage(
   return { url: pub.publicUrl, path };
 }
 
-export async function updateBanner(
-  id: BannerId,
-  patch: Partial<Pick<AppBanner, 'image_url' | 'storage_path' | 'alt_text'>>
+export async function insertBannerSlide(
+  placement: BannerId,
+  imageUrl: string,
+  storagePath: string,
+  sortOrder: number,
+  altText = ''
 ): Promise<AppBanner> {
   const { data, error } = await supabase
-    .from('app_banners')
-    .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select('*')
+    .from('app_banner_slides')
+    .insert({
+      placement,
+      image_url: imageUrl,
+      storage_path: storagePath,
+      alt_text: altText,
+      sort_order: sortOrder,
+      is_active: true,
+    })
+    .select(BANNER_FIELDS)
     .maybeSingle();
   if (error) throw error;
   return data as AppBanner;
+}
+
+export async function updateBannerSlide(
+  id: string,
+  patch: Partial<Pick<AppBanner, 'placement' | 'image_url' | 'storage_path' | 'alt_text' | 'sort_order' | 'is_active'>>
+): Promise<void> {
+  const { error } = await supabase
+    .from('app_banner_slides')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function updateBanner(
+  id: BannerId,
+  patch: { image_url?: string; storage_path?: string }
+): Promise<void> {
+  const { error } = await supabase
+    .from('app_banners')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteBannerSlide(id: string): Promise<void> {
+  const { error } = await supabase.from('app_banner_slides').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteBannerImage(path: string): Promise<void> {

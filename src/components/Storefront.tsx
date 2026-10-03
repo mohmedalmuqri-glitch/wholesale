@@ -227,13 +227,13 @@ export function Storefront({ categories, products }: StorefrontProps) {
       {activeTab === 'home' ? (
         <HomeTab
           productsCount={products.length}
-          banner={banners.home ?? null}
+          banners={banners.home}
           onShop={() => setActiveTab('store')}
           onOffers={() => setActiveTab('offers')}
           onSupport={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')}
         />
       ) : activeTab === 'offers' ? (
-        <OffersTab banner={banners.offers ?? null} onShop={() => setActiveTab('store')} />
+        <OffersTab banners={banners.offers} onShop={() => setActiveTab('store')} />
       ) : activeTab === 'store' ? (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 pb-32">
           {filtered.length === 0 ? (
@@ -332,13 +332,13 @@ export function Storefront({ categories, products }: StorefrontProps) {
 
 function HomeTab({
   productsCount,
-  banner,
+  banners,
   onShop,
   onOffers,
   onSupport,
 }: {
   productsCount: number;
-  banner: AppBanner | null;
+  banners: AppBanner[];
   onShop: () => void;
   onOffers: () => void;
   onSupport: () => void;
@@ -346,8 +346,8 @@ function HomeTab({
   return (
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
       {/* Dynamic banner or fallback hero */}
-      {banner?.image_url ? (
-        <BannerDisplay banner={banner} onShop={onShop} />
+      {banners.length > 0 ? (
+        <BannerDisplay banners={banners} onShop={onShop} />
       ) : (
         <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
           <img
@@ -407,15 +407,15 @@ function HomeTab({
 /* ---------------- Offers tab ---------------- */
 
 function OffersTab({
-  banner,
+  banners,
   onShop,
 }: {
-  banner: AppBanner | null;
+  banners: AppBanner[];
   onShop: () => void;
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
-      <BannerDisplay banner={banner} onShop={onShop} rounded={false} minHeight={220} />
+      <BannerDisplay banners={banners} onShop={onShop} rounded={false} minHeight={220} />
 
       <div className="mt-6">
         <h2 className="mb-3 text-lg font-extrabold text-sand-900">عروض شعوب</h2>
@@ -439,56 +439,88 @@ function OffersTab({
 /* ---------------- Banner display ---------------- */
 
 function BannerDisplay({
-  banner,
+  banners,
   onShop,
   rounded = true,
   minHeight = 250,
 }: {
-  banner: AppBanner | null;
+  banners: AppBanner[];
   onShop?: () => void;
   rounded?: boolean;
   minHeight?: number;
 }) {
-  if (banner?.image_url) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const safeIndex = banners.length > 0 ? Math.min(activeIndex, banners.length - 1) : 0;
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [banners.length]);
+
+  useEffect(() => {
+    if (banners.length < 2) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % banners.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [banners.length]);
+
+  if (banners.length > 0) {
     return (
       <section
-        className={`relative mt-4 overflow-hidden shadow-soft ${rounded ? 'rounded-[28px]' : ''}`}
+        className={`relative mt-4 overflow-hidden bg-sand-200 shadow-soft ${rounded ? 'rounded-[28px]' : ''}`}
         style={{ minHeight }}
+        aria-roledescription="carousel"
+        aria-label="بانرات التطبيق"
       >
-        <img
-          src={banner.image_url}
-          alt={banner.alt_text || 'بانر'}
-          className="w-full object-cover"
-          style={{ minHeight }}
-        />
-        {onShop && (
-          <button
-            type="button"
-            onClick={onShop}
-            className="absolute bottom-4 right-4 flex h-11 items-center rounded-full bg-orange-500 px-6 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
-          >
-            تسوّق الآن
-          </button>
-        )}
+        {banners.map((banner, index) => (
+          <img
+            key={banner.id}
+            src={banner.image_url}
+            alt={banner.alt_text || `بانر ${index + 1}`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${index === safeIndex ? 'opacity-100' : 'opacity-0'}`}
+            style={{ minHeight }}
+          />
+        ))}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/35 to-transparent px-4 pb-4 pt-12">
+          {onShop ? (
+            <button
+              type="button"
+              onClick={onShop}
+              className="flex h-10 items-center rounded-full bg-orange-500 px-5 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+            >
+              تسوّق الآن
+            </button>
+          ) : <span />}
+          {banners.length > 1 && (
+            <div className="flex items-center gap-1.5" role="tablist" aria-label="اختيار البانر">
+              {banners.map((banner, index) => (
+                <button
+                  key={banner.id}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={`h-2 rounded-full transition-all ${index === safeIndex ? 'w-6 bg-white' : 'w-2 bg-white/60 hover:bg-white'}`}
+                  aria-label={`عرض البانر ${index + 1}`}
+                  aria-selected={index === safeIndex}
+                  role="tab"
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     );
   }
 
-  // Fallback placeholder for offers tab when no banner is set
   return (
     <section
-      className={`relative mt-4 flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand-700 to-brand-900 shadow-soft ${
-        rounded ? 'rounded-[28px]' : ''
-      }`}
+      className={`relative mt-4 flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand-700 to-brand-900 shadow-soft ${rounded ? 'rounded-[28px]' : ''}`}
       style={{ minHeight }}
     >
       <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
       <div className="relative p-6 text-center text-white">
         <Percent size={40} className="mx-auto mb-3 text-orange-300" />
         <h2 className="font-display text-xl font-extrabold sm:text-2xl">بانر العروض</h2>
-        <p className="mt-2 text-xs text-white/70">
-          سيظهر بانر العروض هنا بعد رفع الصورة من لوحة التحكم
-        </p>
+        <p className="mt-2 text-xs text-white/70">سيظهر بانر العروض هنا بعد رفع الصورة من لوحة التحكم</p>
       </div>
     </section>
   );

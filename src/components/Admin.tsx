@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import type { Category, Customer, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 import { AdminSettingsTab } from './AdminSettingsTab';
+import { BannerSlidesAdminTab } from './BannerSlidesAdminTab';
 import { CustomersAdminTab as CustomersManagementTab } from './CustomersAdminTab';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types';
 import { useToast } from './Toast';
@@ -314,7 +315,7 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
         ) : tab === 'customers' ? (
           <CustomersManagementTab />
         ) : tab === 'banners' ? (
-          <BannersAdminTab />
+          <BannerSlidesAdminTab />
         ) : tab === 'settings' ? (
           <AdminSettingsTab />
         ) : (
@@ -2015,7 +2016,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function BannersAdminTab() {
   const { notify } = useToast();
-  const [banners, setBanners] = useState<Record<BannerId, AppBanner | null>>({
+  const [banners, setBanners] = useState<Record<string, AppBanner | null>>({
     home: null,
     offers: null,
   });
@@ -2029,7 +2030,7 @@ function BannersAdminTab() {
   useEffect(() => {
     fetchBanners()
       .then((rows) => {
-        const map: Record<BannerId, AppBanner | null> = { home: null, offers: null };
+        const map: Record<string, AppBanner | null> = { home: null, offers: null };
         for (const r of rows) map[r.id] = r;
         setBanners(map);
       })
@@ -2055,7 +2056,7 @@ function BannersAdminTab() {
         await deleteBannerImage(existing.storage_path).catch(() => undefined);
       }
       const updated = await fetchBanners();
-      const map: Record<BannerId, AppBanner | null> = { home: null, offers: null };
+      const map: Record<string, AppBanner | null> = { home: null, offers: null };
       for (const r of updated) map[r.id] = r;
       setBanners(map);
       notify('تم رفع البانر بنجاح');

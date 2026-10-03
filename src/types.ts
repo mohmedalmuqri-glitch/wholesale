@@ -119,9 +119,13 @@ export type AppSettings = {
 export type BannerId = 'home' | 'offers';
 
 export type AppBanner = {
-  id: BannerId;
+  id: string;
+  placement: BannerId;
   image_url: string;
   storage_path: string;
   alt_text: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
   updated_at: string;
 };

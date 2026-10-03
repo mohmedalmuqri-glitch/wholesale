@@ -3,26 +3,34 @@ import { supabase } from '@/lib/supabase';
 import { fetchBanners } from '@/lib/db';
 import type { AppBanner, BannerId } from '@/types';
 
-const BANNER_CACHE_KEY = 'shouub_banners_v1';
+const BANNER_CACHE_KEY = 'shouub_banner_slides_v1';
+type BannerMap = Record<BannerId, AppBanner[]>;
+const EMPTY_BANNERS: BannerMap = { home: [], offers: [] };
 
-type BannerMap = Partial<Record<BannerId, AppBanner>>;
-
-function readCache(): BannerMap | null {
+function readCache(): BannerMap {
   try {
     const raw = localStorage.getItem(BANNER_CACHE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as BannerMap;
+    if (!raw) return EMPTY_BANNERS;
+    const parsed = JSON.parse(raw) as Partial<BannerMap>;
+    return { home: parsed.home ?? [], offers: parsed.offers ?? [] };
   } catch {
-    return null;
+    return EMPTY_BANNERS;
   }
 }
 
-function writeCache(map: BannerMap) {
+function writeCache(map: BannerMap): void {
   try {
     localStorage.setItem(BANNER_CACHE_KEY, JSON.stringify(map));
   } catch {
-    // ignore
+    // Cache is optional.
   }
+}
+
+function groupBanners(rows: AppBanner[]): BannerMap {
+  return {
+    home: rows.filter((row) => row.placement === 'home' && row.is_active),
+    offers: rows.filter((row) => row.placement === 'offers' && row.is_active),
+  };
 }
 
 export function useBanners(): {
@@ -30,18 +38,16 @@ export function useBanners(): {
   loading: boolean;
   refresh: () => Promise<void>;
 } {
-  const [banners, setBanners] = useState<BannerMap>(() => readCache() ?? {});
+  const [banners, setBanners] = useState<BannerMap>(() => readCache());
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const rows = await fetchBanners();
-      const map: BannerMap = {};
-      for (const r of rows) map[r.id] = r;
+      const map = groupBanners(await fetchBanners());
       setBanners(map);
       writeCache(map);
     } catch {
-      // keep cached/fallback
+      // Keep cached slides when the network is unavailable.
     } finally {
       setLoading(false);
     }
@@ -50,12 +56,8 @@ export function useBanners(): {
   useEffect(() => {
     refresh();
     const channel = supabase
-      .channel('banners-rt')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'app_banners' },
-        () => refresh()
-      )
+      .channel('banner-slides-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_banner_slides' }, refresh)
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
