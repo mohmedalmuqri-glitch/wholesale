@@ -25,15 +25,17 @@ import {
   ExternalLink,
   Phone,
   Store,
+  Tag,
   BarChart3,
   Download,
   MessageCircle,
   Minus,
   Settings,
 } from 'lucide-react';
-import type { Category, Customer, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import type { Category, Customer, OfferCategory, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 import { AdminSettingsTab } from './AdminSettingsTab';
 import { BannerSlidesAdminTab } from './BannerSlidesAdminTab';
+import { OfferManagementTab } from './OfferManagementTab';
 import { CustomersAdminTab as CustomersManagementTab } from './CustomersAdminTab';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types';
 import { useToast } from './Toast';
@@ -62,6 +64,7 @@ type AdminProps = {
   categories: Category[];
   products: Product[];
   onRefresh: () => Promise<void>;
+  offerCategories: OfferCategory[];
 };
 
 type ProductDraft = {
@@ -91,8 +94,8 @@ const EMPTY_DRAFT: ProductDraft = {
   stock: '',
 };
 
-export function Admin({ categories, products, onRefresh }: AdminProps) {
-  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'banners' | 'settings'>('products');
+export function Admin({ categories, products, onRefresh, offerCategories }: AdminProps) {
+  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'offers' | 'banners' | 'settings'>('products');
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -102,7 +105,7 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
   const { notify } = useToast();
 
   const sortedProducts = useMemo(
-    () => [...products].sort((a, b) => (b.created_at > a.created_at ? 1 : -1)),
+    () => products.filter((product) => !product.is_offer).sort((a, b) => (b.created_at > a.created_at ? 1 : -1)),
     [products]
   );
 
@@ -290,6 +293,9 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
           <TabButton active={tab === 'customers'} onClick={() => setTab('customers')} icon={<Users size={18} />}>
             العملاء
           </TabButton>
+          <TabButton active={tab === 'offers'} onClick={() => setTab('offers')} icon={<Tag size={18} />}>
+            إدارة العروض والأقسام
+          </TabButton>
           <TabButton active={tab === 'banners'} onClick={() => setTab('banners')} icon={<ImageIcon size={18} />}>
             إدارة البانرات
           </TabButton>
@@ -314,6 +320,8 @@ export function Admin({ categories, products, onRefresh }: AdminProps) {
           <OrdersAdminTab onRefresh={onRefresh} />
         ) : tab === 'customers' ? (
           <CustomersManagementTab />
+        ) : tab === 'offers' ? (
+          <OfferManagementTab categories={offerCategories} products={products} onRefresh={onRefresh} />
         ) : tab === 'banners' ? (
           <BannerSlidesAdminTab />
         ) : tab === 'settings' ? (

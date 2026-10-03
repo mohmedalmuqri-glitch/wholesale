@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function App() {
   const route = useHashRoute();
-  const { categories, products, loading, error, refresh } = useSupabaseData();
+  const { categories, products, offerCategories, loading, error, refresh } = useSupabaseData();
 
   // If we have cached data, show the UI immediately with a subtle refresh indicator
   const hasData = categories.length > 0 || products.length > 0;
@@ -41,10 +41,10 @@ export default function App() {
     <ToastProvider>
       {route === 'admin' ? (
         <AdminGate>
-          <Admin categories={categories} products={products} onRefresh={refresh} />
+          <Admin categories={categories} products={products} offerCategories={offerCategories} onRefresh={refresh} />
         </AdminGate>
       ) : (
-        <Storefront categories={categories} products={products} />
+        <Storefront categories={categories} products={products} offerCategories={offerCategories} />
       )}
     </ToastProvider>
   );

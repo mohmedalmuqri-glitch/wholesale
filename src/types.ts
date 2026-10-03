@@ -17,6 +17,16 @@ export type Product = {
   half_carton_price: number | null;
   half_carton_units: number | null;
   stock: number;
+  is_offer?: boolean;
+  offer_category_id?: string | null;
+  discount_percentage?: number;
+  old_price?: number | null;
+  created_at: string;
+};
+
+export type OfferCategory = {
+  id: string;
+  name: string;
   created_at: string;
 };
 

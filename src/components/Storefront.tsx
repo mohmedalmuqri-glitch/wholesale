@@ -9,7 +9,7 @@ import {
   Package,
   Check,
 } from 'lucide-react';
-import type { CartItem, Category, CartUnit, Customer, Product, AppBanner } from '@/types';
+import type { AppBanner, CartItem, Category, CartUnit, Customer, OfferCategory, Product } from '@/types';
 import { CART_BLUE, STORAGE_KEYS } from '@/types';
 import { formatSAR } from '@/utils';
 import { CartDrawer } from './CartDrawer';
@@ -20,13 +20,15 @@ import { useToast } from './Toast';
 import { BottomNav, type BottomTab } from './BottomNav';
 import { supabase } from '@/lib/supabase';
 import { useBanners } from '@/hooks/useBanners';
+import { OfferSection } from './OfferSection';
 
 type StorefrontProps = {
   categories: Category[];
   products: Product[];
+  offerCategories: OfferCategory[];
 };
 
-export function Storefront({ categories, products }: StorefrontProps) {
+export function Storefront({ categories, products, offerCategories }: StorefrontProps) {
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<BottomTab>('home');
@@ -233,7 +235,13 @@ export function Storefront({ categories, products }: StorefrontProps) {
           onSupport={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')}
         />
       ) : activeTab === 'offers' ? (
-        <OffersTab banners={banners.offers} onShop={() => setActiveTab('store')} />
+        <OffersTab
+          banners={banners.offers}
+          offerCategories={offerCategories}
+          offerProducts={products.filter((product) => product.is_offer)}
+          onAdd={addFullCarton}
+          onShop={() => setActiveTab('store')}
+        />
       ) : activeTab === 'store' ? (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 pb-32">
           {filtered.length === 0 ? (
@@ -408,29 +416,39 @@ function HomeTab({
 
 function OffersTab({
   banners,
+  offerCategories,
+  offerProducts,
+  onAdd,
   onShop,
 }: {
   banners: AppBanner[];
+  offerCategories: OfferCategory[];
+  offerProducts: Product[];
+  onAdd: (productId: string) => void;
   onShop: () => void;
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
       <BannerDisplay banners={banners} onShop={onShop} rounded={false} minHeight={220} />
 
-      <div className="mt-6">
-        <h2 className="mb-3 text-lg font-extrabold text-sand-900">عروض شعوب</h2>
-        <div className="rounded-2xl border border-dashed border-sand-300 bg-white py-16 text-center shadow-card">
-          <Percent size={48} strokeWidth={1.2} className="mx-auto mb-3 text-orange-400" />
-          <p className="font-bold text-sand-600">لا توجد عروض مضافة حالياً</p>
-          <p className="mt-1 text-sm text-sand-400">سيتم عرض المنتجات المخفّضة هنا قريباً</p>
-          <button
-            type="button"
-            onClick={onShop}
-            className="mt-4 inline-flex h-10 items-center rounded-full bg-brand-600 px-5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-95"
-          >
-            تصفح المتجر
-          </button>
-        </div>
+      <div className="mt-6" dir="rtl">
+        <h2 className="mb-4 text-lg font-extrabold text-sand-900">عروض شعوب</h2>
+        {offerCategories.length === 0 || offerProducts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-sand-300 bg-white py-16 text-center shadow-card">
+            <Percent size={48} strokeWidth={1.2} className="mx-auto mb-3 text-orange-400" />
+            <p className="font-bold text-sand-600">لا توجد عروض مضافة حالياً</p>
+            <p className="mt-1 text-sm text-sand-400">سيتم عرض المنتجات المخفّضة هنا قريباً</p>
+            <button type="button" onClick={onShop} className="mt-4 inline-flex h-10 items-center rounded-full bg-brand-600 px-5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-95">تصفح المتجر</button>
+          </div>
+        ) : (
+          <div className="space-y-7">
+            {offerCategories.map((category) => {
+              const categoryProducts = offerProducts.filter((product) => product.offer_category_id === category.id);
+              if (categoryProducts.length === 0) return null;
+              return <OfferSection key={category.id} category={category} products={categoryProducts} onAdd={onAdd} />;
+            })}
+          </div>
+        )}
       </div>
     </main>
   );
