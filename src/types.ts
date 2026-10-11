@@ -2,6 +2,10 @@ export type Category = {
   id: string;
   name: string;
   color?: string;
+  image: string;
+  active_image: string;
+  parent_id: string | null;
+  sort_order: number;
   created_at: string;
 };
 

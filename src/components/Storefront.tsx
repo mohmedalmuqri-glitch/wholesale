@@ -5,7 +5,6 @@ import {
   Percent,
   Search,
   ShoppingCart,
-  Store,
   Package,
   Check,
 } from 'lucide-react';
@@ -18,6 +17,7 @@ import { ProfileTab } from './ProfileTab';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from './Toast';
 import { BottomNav, type BottomTab } from './BottomNav';
+import { CategoryRail } from './CategoryRail';
 import { supabase } from '@/lib/supabase';
 import { useBanners } from '@/hooks/useBanners';
 import { OfferSection } from './OfferSection';
@@ -160,7 +160,7 @@ export function Storefront({ categories, products, offerCategories }: Storefront
           <button
             type="button"
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-2 text-right transition-transform active:scale-95"
+            className="flex items-center gap-2 text-right transition-transform active:scale-95 shrink-0"
             aria-label="الرئيسية"
           >
             <img src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg" alt="شعار شعوب" className="h-11 w-11 rounded-xl object-cover" />
@@ -170,7 +170,13 @@ export function Storefront({ categories, products, offerCategories }: Storefront
             </span>
           </button>
 
-          <div className="flex items-center gap-2">
+          {activeTab === 'store' && (
+            <div className="flex-1 min-w-0">
+              <CategoryRail categories={categories} activeCat={activeCat} onSelect={setActiveCat} />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => notify('لا توجد إشعارات جديدة حالياً')}
@@ -215,12 +221,6 @@ export function Storefront({ categories, products, offerCategories }: Storefront
               placeholder="ابحث عن منتج..."
               className="h-11 w-full rounded-full border border-transparent bg-sand-100 pl-4 pr-10 text-sm text-sand-800 outline-none transition-all placeholder:text-sand-400 focus:border-brand-400 focus:bg-white"
             />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            <Chip active={activeCat === 'all'} onClick={() => setActiveCat('all')}>الكل</Chip>
-            {categories.map((c) => (
-              <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)}>{c.name}</Chip>
-            ))}
           </div>
         </div>
       )}
@@ -640,29 +640,6 @@ function ChoiceOption({
         {sub && <p className="text-xs text-sand-400 mt-0.5">{sub}</p>}
       </div>
       <span className="text-sm font-extrabold text-red-600 shrink-0">{formatSAR(price)}</span>
-    </button>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`shrink-0 px-4 h-9 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-        active
-          ? 'bg-brand-600 text-white shadow-soft'
-          : 'bg-white text-sand-600 border border-sand-200 hover:border-brand-300 hover:text-brand-700'
-      }`}
-    >
-      {children}
     </button>
   );
 }

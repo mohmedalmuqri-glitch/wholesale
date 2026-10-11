@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { mapCategory, mapOfferCategory, mapProduct } from '@/lib/mappers';
 import type { Category, OfferCategory, Product } from '@/types';
 
-const CACHE_KEY = 'tajeri_data_cache_v2';
+const CACHE_KEY = 'tajeri_data_cache_v3';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type CachedData = {
@@ -55,7 +55,7 @@ export function useSupabaseData(): DataState {
       const [catRes, offerCatRes, prodRes] = await Promise.all([
         supabase
           .from('categories')
-          .select('id,name,color,created_at')
+          .select('id,name,color,image,active_image,parent_id,sort_order,created_at')
           .order('created_at', { ascending: true }),
         supabase
           .from('offer_categories')

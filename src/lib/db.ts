@@ -86,15 +86,20 @@ export async function deleteProduct(id: string): Promise<void> {
 
 /* ---------------- Categories ---------------- */
 
-export async function insertCategory(name: string, color = '#059669'): Promise<Category | null> {
+export async function insertCategory(name: string, color = '#059669', image = '', activeImage = '', parentId: string | null = null, sortOrder = 0): Promise<Category | null> {
   const { data: row, error } = await supabase
     .from('categories')
-    .insert({ name, color })
+    .insert({ name, color, image, active_image: activeImage, parent_id: parentId, sort_order: sortOrder })
     .select('*')
     .maybeSingle();
 
   if (error) throw error;
   return row as Category | null;
+}
+
+export async function updateCategory(id: string, patch: Partial<Pick<Category, 'name' | 'image' | 'active_image' | 'parent_id' | 'sort_order'>>): Promise<void> {
+  const { error } = await supabase.from('categories').update(patch).eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteCategory(id: string): Promise<void> {

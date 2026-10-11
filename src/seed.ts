@@ -1,10 +1,10 @@
 import type { Category, Product } from './types';
 
 export const SEED_CATEGORIES: Category[] = [
-  { id: 'cat-biscuits', name: 'عالم البسكويت', color: '#059669', created_at: String(Date.now() - 5000) },
-  { id: 'cat-drinks', name: 'المشروبات والعصائر', color: '#0d9488', created_at: String(Date.now() - 4000) },
-  { id: 'cat-grains', name: 'الحبوب والأرز', color: '#0891b2', created_at: String(Date.now() - 3000) },
-  { id: 'cat-oils', name: 'الزيوت والسمن', color: '#65a30d', created_at: String(Date.now() - 2000) },
+  { id: 'cat-biscuits', name: 'عالم البسكويت', color: '#059669', image: '', active_image: '', parent_id: null, sort_order: 0, created_at: String(Date.now() - 5000) },
+  { id: 'cat-drinks', name: 'المشروبات والعصائر', color: '#0d9488', image: '', active_image: '', parent_id: null, sort_order: 1, created_at: String(Date.now() - 4000) },
+  { id: 'cat-grains', name: 'الحبوب والأرز', color: '#0891b2', image: '', active_image: '', parent_id: null, sort_order: 2, created_at: String(Date.now() - 3000) },
+  { id: 'cat-oils', name: 'الزيوت والسمن', color: '#65a30d', image: '', active_image: '', parent_id: null, sort_order: 3, created_at: String(Date.now() - 2000) },
 ];
 
 export const SEED_PRODUCTS: Product[] = [

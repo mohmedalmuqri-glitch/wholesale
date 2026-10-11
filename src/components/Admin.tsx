@@ -2,7 +2,6 @@ import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import {
   ArrowRight,
   Boxes,
-  FolderPlus,
   LayoutGrid,
   Pencil,
   Plus,
@@ -37,6 +36,7 @@ import { AdminSettingsTab } from './AdminSettingsTab';
 import { BannerSlidesAdminTab } from './BannerSlidesAdminTab';
 import { OfferManagementTab } from './OfferManagementTab';
 import { CustomersAdminTab as CustomersManagementTab } from './CustomersAdminTab';
+import { CategoriesManagementTab } from './CategoriesManagementTab';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types';
 import { useToast } from './Toast';
 import { fileToResizedDataURL, formatSAR } from '@/utils';
@@ -47,8 +47,6 @@ import {
   insertProductsBatch,
   updateProduct,
   deleteProduct as dbDeleteProduct,
-  insertCategory,
-  deleteCategory as dbDeleteCategory,
   fetchAllOrders,
   fetchAllCustomers,
   updateOrderStatus,
@@ -226,32 +224,6 @@ export function Admin({ categories, products, onRefresh, offerCategories }: Admi
     }
   };
 
-  const handleAddCategory = async (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    try {
-      await insertCategory(trimmed);
-      await onRefresh();
-      notify(`تمت إضافة قسم "${trimmed}"`);
-    } catch (err) {
-      notify(err instanceof Error ? err.message : 'فشل إضافة القسم', 'error');
-    }
-  };
-
-  const handleDeleteCategory = async (cat: Category) => {
-    const linked = products.filter((p) => p.category_id === cat.id).length;
-    const msg = linked
-      ? `القسم "${cat.name}" مرتبط بـ ${linked} منتج. حذف القسم سيجعل هذه المنتجات بدون قسم. متابعة؟`
-      : `حذف القسم "${cat.name}"؟`;
-    if (!window.confirm(msg)) return;
-    try {
-      await dbDeleteCategory(cat.id);
-      await onRefresh();
-      notify('تم حذف القسم', 'info');
-    } catch (err) {
-      notify(err instanceof Error ? err.message : 'فشل حذف القسم', 'error');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-sand-100 flex flex-col">
@@ -327,12 +299,7 @@ export function Admin({ categories, products, onRefresh, offerCategories }: Admi
         ) : tab === 'settings' ? (
           <AdminSettingsTab />
         ) : (
-          <CategoriesTab
-            categories={categories}
-            products={products}
-            onAdd={handleAddCategory}
-            onDelete={handleDeleteCategory}
-          />
+          <CategoriesManagementTab categories={categories} products={products} onRefresh={onRefresh} />
         )}
       </main>
 
@@ -1681,108 +1648,6 @@ function ReportStat({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between">
       <span className="text-sm text-sand-500">{label}</span>
       <span className="text-base font-extrabold text-sand-900">{value}</span>
-    </div>
-  );
-}
-
-/* ---------------- Categories tab ---------------- */
-
-function CategoriesTab({
-  categories,
-  products,
-  onAdd,
-  onDelete,
-}: {
-  categories: Category[];
-  products: Product[];
-  onAdd: (name: string) => void;
-  onDelete: (c: Category) => void;
-}) {
-  const [name, setName] = useState('');
-  const [adding, setAdding] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setAdding(true);
-    try {
-      await onAdd(name);
-      setName('');
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  return (
-    <div>
-      <div className="mb-4">
-        <h2 className="text-xl font-extrabold text-sand-900">إدارة الأقسام</h2>
-        <p className="text-sm text-sand-500 mt-0.5">
-          الأقسام تظهر فوراً كخيارات عند إضافة منتج جديد
-        </p>
-      </div>
-
-      <form onSubmit={submit} className="flex gap-2 mb-6 max-w-md">
-        <div className="relative flex-1">
-          <FolderPlus
-            size={18}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-sand-400 pointer-events-none"
-          />
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="اسم القسم الجديد..."
-            className="w-full h-12 rounded-2xl bg-white border border-sand-200 focus:border-brand-400 pr-10 pl-4 text-sm outline-none transition-all"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={!name.trim() || adding}
-          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:bg-sand-300 text-white font-bold text-sm px-5 h-12 rounded-2xl transition-colors shadow-soft active:scale-95"
-        >
-          {adding ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
-          إضافة قسم
-        </button>
-      </form>
-
-      {categories.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-sand-300 py-16 flex flex-col items-center text-sand-400">
-          <Boxes size={56} strokeWidth={1.2} className="mb-3" />
-          <p className="font-medium text-sand-600">لا توجد أقسام بعد</p>
-          <p className="text-sm mt-1">أضف أول قسم باستخدام الحقل أعلاه</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {categories.map((cat) => {
-            const count = products.filter((p) => p.category_id === cat.id).length;
-            return (
-              <div
-                key={cat.id}
-                className="group bg-white rounded-2xl border border-sand-200 p-4 shadow-card hover:shadow-soft transition-all flex items-center gap-3 animate-fade-in"
-              >
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0"
-                  style={{ backgroundColor: cat.color ?? '#059669' }}
-                >
-                  <Boxes size={22} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sand-800 truncate">{cat.name}</p>
-                  <p className="text-xs text-sand-400 mt-0.5">{count} منتج</p>
-                </div>
-                <button
-                  onClick={() => onDelete(cat)}
-                  className="w-9 h-9 rounded-lg text-sand-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label="حذف القسم"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

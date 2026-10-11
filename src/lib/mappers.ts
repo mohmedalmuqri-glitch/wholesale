@@ -36,6 +36,10 @@ export function mapCategory(row: Record<string, unknown>): Category {
     id: String(row.id),
     name: String(row.name ?? ''),
     color: row.color ? String(row.color) : '#059669',
+    image: String(row.image ?? ''),
+    active_image: String(row.active_image ?? ''),
+    parent_id: row.parent_id ? String(row.parent_id) : null,
+    sort_order: Number(row.sort_order ?? 0),
     created_at: String(row.created_at ?? ''),
   };
 }
