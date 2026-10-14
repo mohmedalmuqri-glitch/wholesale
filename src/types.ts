@@ -127,6 +127,7 @@ export type AppSettings = {
   whatsapp_number: string;
   admin_pin: string;
   pin_required: boolean;
+  hide_offers_button: boolean;
   updated_at: string;
 };
 

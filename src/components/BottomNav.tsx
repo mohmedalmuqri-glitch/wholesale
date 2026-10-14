@@ -5,9 +5,10 @@ export type BottomTab = 'home' | 'offers' | 'store' | 'orders' | 'profile';
 type BottomNavProps = {
   activeTab: BottomTab;
   onChange: (tab: BottomTab) => void;
+  hideOffers?: boolean;
 };
 
-const tabs: Array<{ id: BottomTab; label: string; icon: typeof Store }> = [
+const allTabs: Array<{ id: BottomTab; label: string; icon: typeof Store }> = [
   { id: 'home', label: 'الرئيسية', icon: Home },
   { id: 'offers', label: 'العروض', icon: Percent },
   { id: 'store', label: 'المتجر', icon: Store },
@@ -15,13 +16,19 @@ const tabs: Array<{ id: BottomTab; label: string; icon: typeof Store }> = [
   { id: 'profile', label: 'صفحتي', icon: UserRound },
 ];
 
-export function BottomNav({ activeTab, onChange }: BottomNavProps) {
+export function BottomNav({ activeTab, onChange, hideOffers = false }: BottomNavProps) {
+  const tabs = hideOffers ? allTabs.filter((t) => t.id !== 'offers') : allTabs;
+  const colCount = tabs.length;
+
   return (
     <nav
       aria-label="التنقل الرئيسي"
       className="fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 shadow-[0_-8px_28px_rgba(28,25,23,0.08)] backdrop-blur-md"
     >
-      <div className="mx-auto grid max-w-5xl grid-cols-5 px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
+      <div
+        className="mx-auto grid max-w-5xl px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2"
+        style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+      >
         {tabs.map(({ id, label, icon: Icon }) => {
           const active = activeTab === id;
           return (

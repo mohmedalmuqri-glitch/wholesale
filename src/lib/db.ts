@@ -267,12 +267,13 @@ export async function fetchSettings(): Promise<AppSettings> {
     whatsapp_number: '967781995868',
     admin_pin: '1234',
     pin_required: true,
+    hide_offers_button: false,
     updated_at: new Date().toISOString(),
   }) as AppSettings;
 }
 
 export async function updateSettings(
-  patch: Partial<Pick<AppSettings, 'whatsapp_number' | 'admin_pin' | 'pin_required'>>
+  patch: Partial<Pick<AppSettings, 'whatsapp_number' | 'admin_pin' | 'pin_required' | 'hide_offers_button'>>
 ): Promise<AppSettings> {
   const { data, error } = await supabase
     .from('app_settings')

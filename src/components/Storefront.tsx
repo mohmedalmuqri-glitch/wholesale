@@ -17,6 +17,7 @@ import { ProfileTab } from './ProfileTab';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from './Toast';
 import { BottomNav, type BottomTab } from './BottomNav';
+import { fetchSettings } from '@/lib/db';
 import { CategoryRail } from './CategoryRail';
 import { supabase } from '@/lib/supabase';
 import { useBanners } from '@/hooks/useBanners';
@@ -39,6 +40,7 @@ export function Storefront({ categories, products, offerCategories }: Storefront
   const [choiceProduct, setChoiceProduct] = useState<Product | null>(null);
   const [choiceUnit, setChoiceUnit] = useState<CartUnit>('full');
   const [orderRefreshKey, setOrderRefreshKey] = useState(0);
+  const [hideOffers, setHideOffers] = useState(false);
   const { notify } = useToast();
   const { banners } = useBanners();
 
@@ -60,6 +62,16 @@ export function Storefront({ categories, products, offerCategories }: Storefront
   useEffect(() => {
     refreshCustomer();
   }, [refreshCustomer]);
+
+  useEffect(() => {
+    fetchSettings()
+      .then((s) => setHideOffers(s.hide_offers_button))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (hideOffers && activeTab === 'offers') setActiveTab('store');
+  }, [hideOffers, activeTab]);
 
   // Realtime subscription for customer's orders
   useEffect(() => {
@@ -306,7 +318,7 @@ export function Storefront({ categories, products, offerCategories }: Storefront
         <ProfileTab customer={customer} onSaved={handleCustomerSaved} />
       )}
 
-      <BottomNav activeTab={activeTab} onChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} hideOffers={hideOffers} />
 
       <CartDrawer
         open={cartOpen}

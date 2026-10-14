@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, KeyRound, Loader2, Phone, ShieldCheck } from 'lucide-react';
+import { Check, EyeOff, KeyRound, Loader2, Phone, ShieldCheck } from 'lucide-react';
 import type { AppSettings } from '@/types';
 import { fetchSettings, updateSettings } from '@/lib/db';
 import { useToast } from './Toast';
@@ -14,6 +14,7 @@ export function AdminSettingsTab() {
   const [savingPin, setSavingPin] = useState(false);
   const [savingNumber, setSavingNumber] = useState(false);
   const [savingToggle, setSavingToggle] = useState(false);
+  const [savingOffersToggle, setSavingOffersToggle] = useState(false);
 
   useEffect(() => {
     fetchSettings()
@@ -78,6 +79,20 @@ export function AdminSettingsTab() {
       notify('تعذر تحديث خيار الرمز السري', 'error');
     } finally {
       setSavingToggle(false);
+    }
+  };
+
+  const toggleHideOffers = async () => {
+    if (!settings) return;
+    setSavingOffersToggle(true);
+    try {
+      const updated = await updateSettings({ hide_offers_button: !settings.hide_offers_button });
+      setSettings(updated);
+      notify(updated.hide_offers_button ? 'تم إخفاء زر العروض من تطبيق العملاء' : 'تم إظهار زر العروض في تطبيق العملاء');
+    } catch {
+      notify('تعذر تحديث خيار إظهار العروض', 'error');
+    } finally {
+      setSavingOffersToggle(false);
     }
   };
 
@@ -197,6 +212,35 @@ export function AdminSettingsTab() {
           {savingNumber ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
           حفظ الرقم
         </button>
+      </section>
+
+      <section className="bg-white rounded-3xl border border-sand-200 shadow-card p-5 sm:p-7">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+              <EyeOff size={22} />
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-sand-900">إخفاء زر العروض</h3>
+              <p className="text-xs text-sand-500 mt-1">عند التفعيل يُحذف زر «العروض» من الشريط السفلي في تطبيق العملاء.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={toggleHideOffers}
+            disabled={savingOffersToggle || !settings}
+            aria-label="تبديل إخفاء زر العروض"
+            className={`relative w-14 h-8 rounded-full transition-colors shrink-0 ${
+              settings?.hide_offers_button ? 'bg-orange-500' : 'bg-sand-300'
+            }`}
+          >
+            <span
+              className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                settings?.hide_offers_button ? 'right-1' : 'right-7'
+              }`}
+            />
+          </button>
+        </div>
       </section>
     </div>
   );
