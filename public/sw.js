@@ -36,3 +36,39 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+self.addEventListener('push', (event) => {
+  let data = { title: 'إشعار جديد', body: '' };
+  try {
+    if (event.data) {
+      data = event.data.json();
+      data = data.notification ?? data;
+    }
+  } catch {
+    if (event.data) {
+      data = { title: 'إشعار جديد', body: event.data.text() };
+    }
+  }
+
+  const options = {
+    body: data.body ?? '',
+    icon: '/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg',
+    badge: '/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg',
+    dir: 'rtl',
+    lang: 'ar',
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title ?? 'إشعار جديد', options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/');
+    })
+  );
+});

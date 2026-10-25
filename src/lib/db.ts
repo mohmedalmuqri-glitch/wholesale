@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, GeographicZone, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, GeographicZone, Notification, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 
 /* ---------------- Products ---------------- */
 
@@ -369,4 +369,81 @@ export async function deleteBannerImage(path: string): Promise<void> {
   if (!path) return;
   const { error } = await supabase.storage.from('banners').remove([path]);
   if (error) throw error;
+}
+
+/* ---------------- Notifications ---------------- */
+
+export async function fetchNotifications(): Promise<Notification[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id,title,body,created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Notification[];
+}
+
+export async function insertNotification(title: string, body: string): Promise<Notification | null> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert({ title, body })
+    .select('id,title,body,created_at')
+    .maybeSingle();
+  if (error) throw error;
+  return data as Notification | null;
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  const { error } = await supabase.from('notifications').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function fetchReadNotificationIds(customerId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('notification_reads')
+    .select('notification_id')
+    .eq('customer_id', customerId);
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.notification_id as string));
+}
+
+export async function markAllNotificationsRead(notificationIds: string[], customerId: string): Promise<void> {
+  if (notificationIds.length === 0) return;
+  const rows = notificationIds.map((nid) => ({ notification_id: nid, customer_id: customerId }));
+  const { error } = await supabase.from('notification_reads').insert(rows);
+  if (error && error.code !== '23505') throw error;
+}
+
+/* ---------------- Device tokens (FCM) ---------------- */
+
+export async function upsertDeviceToken(token: string, customerId: string | null, platform = 'web'): Promise<void> {
+  const { error } = await supabase
+    .from('device_tokens')
+    .upsert(
+      { token, customer_id: customerId, platform, updated_at: new Date().toISOString() },
+      { onConflict: 'token' }
+    );
+  if (error) throw error;
+}
+
+export async function deleteDeviceToken(token: string): Promise<void> {
+  const { error } = await supabase.from('device_tokens').delete().eq('token', token);
+  if (error) throw error;
+}
+
+export async function sendPushNotification(title: string, body: string): Promise<{ success: boolean; detail: string }> {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push-notification`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ title, body }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    return { success: false, detail: `HTTP ${res.status}: ${text || res.statusText}` };
+  }
+  const json = await res.json().catch(() => ({}));
+  return { success: json.success ?? true, detail: json.detail ?? json.message ?? '' };
 }

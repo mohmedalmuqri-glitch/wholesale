@@ -22,6 +22,9 @@ import { CategoryRail } from './CategoryRail';
 import { supabase } from '@/lib/supabase';
 import { useBanners } from '@/hooks/useBanners';
 import { OfferSection } from './OfferSection';
+import { NotificationsPanel } from './NotificationsPanel';
+import { useFcm } from '@/hooks/useFcm';
+import { fetchNotifications, fetchReadNotificationIds } from '@/lib/db';
 
 type StorefrontProps = {
   categories: Category[];
@@ -41,6 +44,8 @@ export function Storefront({ categories, products, offerCategories }: Storefront
   const [choiceUnit, setChoiceUnit] = useState<CartUnit>('full');
   const [orderRefreshKey, setOrderRefreshKey] = useState(0);
   const [hideOffers, setHideOffers] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { notify } = useToast();
   const { banners } = useBanners();
 
@@ -72,6 +77,31 @@ export function Storefront({ categories, products, offerCategories }: Storefront
   useEffect(() => {
     if (hideOffers && activeTab === 'offers') setActiveTab('store');
   }, [hideOffers, activeTab]);
+
+  // FCM push notification setup
+  useFcm(customerId);
+
+  // Fetch unread notification count
+  const refreshUnread = useCallback(async () => {
+    try {
+      const notifs = await fetchNotifications();
+      const readSet = customerId ? await fetchReadNotificationIds(customerId) : new Set<string>();
+      setUnreadCount(notifs.filter((n) => !readSet.has(n.id)).length);
+    } catch {
+      // silent
+    }
+  }, [customerId]);
+
+  useEffect(() => {
+    refreshUnread();
+    const channel = supabase
+      .channel('customer-notifs-rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, refreshUnread)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [refreshUnread]);
+
+  const handleNotifUnreadChange = (count: number) => setUnreadCount(count);
 
   // Realtime subscription for customer's orders
   useEffect(() => {
@@ -191,11 +221,16 @@ export function Storefront({ categories, products, offerCategories }: Storefront
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => notify('لا توجد إشعارات جديدة حالياً')}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-sand-200 bg-white text-sand-600 transition hover:border-brand-300 hover:text-brand-700"
+              onClick={() => setNotifOpen(true)}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-sand-200 bg-white text-sand-600 transition hover:border-brand-300 hover:text-brand-700"
               aria-label="الإشعارات"
             >
               <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute -left-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-orange-500 px-1 text-[10px] font-bold text-white animate-pop-in">
+                  {unreadCount}
+                </span>
+              )}
             </button>
             <button
               type="button"
@@ -346,6 +381,13 @@ export function Storefront({ categories, products, offerCategories }: Storefront
           onClose={() => setChoiceProduct(null)}
         />
       )}
+
+      <NotificationsPanel
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        customerId={customerId}
+        onUnreadChange={handleNotifUnreadChange}
+      />
     </div>
   );
 }

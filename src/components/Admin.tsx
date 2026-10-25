@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import {
   ArrowRight,
+  Bell,
   Boxes,
   LayoutGrid,
   Pencil,
@@ -37,6 +38,7 @@ import { BannerSlidesAdminTab } from './BannerSlidesAdminTab';
 import { OfferManagementTab } from './OfferManagementTab';
 import { CustomersAdminTab as CustomersManagementTab } from './CustomersAdminTab';
 import { CategoriesManagementTab } from './CategoriesManagementTab';
+import { NotificationsAdminTab } from './NotificationsAdminTab';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types';
 import { useToast } from './Toast';
 import { fileToResizedDataURL, formatSAR } from '@/utils';
@@ -93,7 +95,7 @@ const EMPTY_DRAFT: ProductDraft = {
 };
 
 export function Admin({ categories, products, onRefresh, offerCategories }: AdminProps) {
-  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'offers' | 'banners' | 'settings'>('products');
+  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'offers' | 'banners' | 'notifications' | 'settings'>('products');
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -271,6 +273,9 @@ export function Admin({ categories, products, onRefresh, offerCategories }: Admi
           <TabButton active={tab === 'banners'} onClick={() => setTab('banners')} icon={<ImageIcon size={18} />}>
             إدارة البانرات
           </TabButton>
+          <TabButton active={tab === 'notifications'} onClick={() => setTab('notifications')} icon={<Bell size={18} />}>
+            الإشعارات
+          </TabButton>
           <TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={<Settings size={18} />}>
             الإعدادات
           </TabButton>
@@ -296,6 +301,8 @@ export function Admin({ categories, products, onRefresh, offerCategories }: Admi
           <OfferManagementTab categories={offerCategories} products={products} onRefresh={onRefresh} />
         ) : tab === 'banners' ? (
           <BannerSlidesAdminTab />
+        ) : tab === 'notifications' ? (
+          <NotificationsAdminTab />
         ) : tab === 'settings' ? (
           <AdminSettingsTab />
         ) : (
