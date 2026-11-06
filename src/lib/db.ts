@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, GeographicZone, Notification, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, DesignSettings, GeographicZone, Notification, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import { DEFAULT_DESIGN_SETTINGS } from '@/types';
 
 /* ---------------- Products ---------------- */
 
@@ -284,6 +285,34 @@ export async function updateSettings(
 
   if (error) throw error;
   return data as AppSettings;
+}
+
+/* ---------------- Design settings ---------------- */
+
+export async function fetchDesignSettings(): Promise<DesignSettings> {
+  const { data, error } = await supabase
+    .from('app_design_settings')
+    .select('*')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data ?? DEFAULT_DESIGN_SETTINGS) as DesignSettings;
+}
+
+export async function updateDesignSettings(
+  patch: Partial<Omit<DesignSettings, 'id' | 'updated_at'>>
+): Promise<DesignSettings> {
+  const { data, error } = await supabase
+    .from('app_design_settings')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', 1)
+    .select('*')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Design settings row not found');
+  return data as DesignSettings;
 }
 
 /* ---------------- Banner slides ---------------- */

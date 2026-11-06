@@ -1,24 +1,23 @@
-import { ClipboardList, Home, Percent, Store, UserRound } from 'lucide-react';
-
-export type BottomTab = 'home' | 'offers' | 'store' | 'orders' | 'profile';
+import { ClipboardList, Home, Percent, Store, UserRound, type LucideIcon } from 'lucide-react';
+import { NAV_TAB_LABELS, type BottomTab } from '@/types';
 
 type BottomNavProps = {
   activeTab: BottomTab;
   onChange: (tab: BottomTab) => void;
+  order: BottomTab[];
   hideOffers?: boolean;
 };
 
-const allTabs: Array<{ id: BottomTab; label: string; icon: typeof Store }> = [
-  { id: 'home', label: 'الرئيسية', icon: Home },
-  { id: 'offers', label: 'العروض', icon: Percent },
-  { id: 'store', label: 'المتجر', icon: Store },
-  { id: 'orders', label: 'الطلبات', icon: ClipboardList },
-  { id: 'profile', label: 'صفحتي', icon: UserRound },
-];
+const TAB_ICONS: Record<BottomTab, LucideIcon> = {
+  home: Home,
+  offers: Percent,
+  store: Store,
+  orders: ClipboardList,
+  profile: UserRound,
+};
 
-export function BottomNav({ activeTab, onChange, hideOffers = false }: BottomNavProps) {
-  const tabs = hideOffers ? allTabs.filter((t) => t.id !== 'offers') : allTabs;
-  const colCount = tabs.length;
+export function BottomNav({ activeTab, onChange, order, hideOffers = false }: BottomNavProps) {
+  const tabs = order.filter((id) => !(hideOffers && id === 'offers'));
 
   return (
     <nav
@@ -27,9 +26,10 @@ export function BottomNav({ activeTab, onChange, hideOffers = false }: BottomNav
     >
       <div
         className="mx-auto grid max-w-5xl px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2"
-        style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
       >
-        {tabs.map(({ id, label, icon: Icon }) => {
+        {tabs.map((id) => {
+          const Icon = TAB_ICONS[id];
           const active = activeTab === id;
           return (
             <button
@@ -38,11 +38,11 @@ export function BottomNav({ activeTab, onChange, hideOffers = false }: BottomNav
               onClick={() => onChange(id)}
               aria-current={active ? 'page' : undefined}
               className={`flex min-h-[66px] flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-bold transition-all active:scale-95 ${
-                active ? 'text-brand-700' : 'text-sand-400 hover:text-brand-600'
+                active ? 'text-theme-active' : 'text-sand-400 hover:text-theme-active'
               }`}
             >
               <Icon size={25} strokeWidth={active ? 2.5 : 1.9} />
-              <span>{label}</span>
+              <span>{NAV_TAB_LABELS[id]}</span>
             </button>
           );
         })}

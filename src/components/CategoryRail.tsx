@@ -51,8 +51,8 @@ export function CategoryRail({ categories, activeCat, onSelect }: Props) {
               onClick={() => handleSelect(cat.id)}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 bg-white transition-all active:scale-90"
               style={{
-                borderColor: isActive ? '#059669' : isPressed ? '#f97316' : '#e7e5e4',
-                backgroundColor: isActive ? '#ecfdf5' : '#ffffff',
+                borderColor: isActive ? 'rgb(var(--color-active))' : isPressed ? 'rgb(var(--color-badge))' : '#e7e5e4',
+                backgroundColor: isActive ? 'rgb(var(--brand-50))' : '#ffffff',
               }}
               aria-label={cat.name}
             >
@@ -127,7 +127,7 @@ function CategoryGridPopup({
               onClose();
             }}
             className="flex h-20 w-full items-center justify-center gap-2 rounded-2xl border-2 bg-brand-50 text-sm font-bold text-brand-700 transition active:scale-95"
-            style={{ borderColor: activeCat === 'all' ? '#059669' : '#d1fae5' }}
+            style={{ borderColor: activeCat === 'all' ? 'rgb(var(--color-active))' : 'rgb(var(--brand-100))' }}
           >
             <Boxes size={20} />
             عرض الكل
@@ -147,8 +147,8 @@ function CategoryGridPopup({
                   }}
                   className="flex flex-col items-center gap-1.5 rounded-2xl border-2 bg-white p-2 transition-all active:scale-90"
                   style={{
-                    borderColor: isActive ? '#059669' : '#e7e5e4',
-                    backgroundColor: isActive ? '#ecfdf5' : '#ffffff',
+                    borderColor: isActive ? 'rgb(var(--color-active))' : '#e7e5e4',
+                    backgroundColor: isActive ? 'rgb(var(--brand-50))' : '#ffffff',
                   }}
                   aria-label={cat.name}
                 >

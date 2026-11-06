@@ -120,7 +120,85 @@ export const STORAGE_KEYS = {
   customerId: 'tajeri_customer_id',
 } as const;
 
-export const CART_BLUE = '#3B82F6';
+export type BottomTab = 'home' | 'offers' | 'store' | 'orders' | 'profile';
+
+export const FONT_OPTIONS = [
+  { value: 'Tajawal', label: 'Tajawal', weights: '400;500;700;800;900' },
+  { value: 'Cairo', label: 'Cairo', weights: '400;500;600;700;800;900' },
+  { value: 'Almarai', label: 'Almarai', weights: '400;700;800' },
+  { value: 'Changa', label: 'Changa', weights: '400;500;600;700' },
+  { value: 'IBM Plex Sans Arabic', label: 'IBM Plex Sans Arabic', weights: '400;500;600;700' },
+  { value: 'Noto Kufi Arabic', label: 'Noto Kufi Arabic', weights: '400;500;600;700;800;900' },
+] as const;
+
+export type FontFamilyName = (typeof FONT_OPTIONS)[number]['value'];
+
+export const NAV_TAB_LABELS: Record<BottomTab, string> = {
+  home: 'الرئيسية',
+  offers: 'العروض',
+  store: 'المتجر',
+  orders: 'الطلبات',
+  profile: 'صفحتي',
+};
+
+export const HOME_SECTION_LABELS = {
+  banner: 'البانر الرئيسي',
+  stats: 'بطاقة عدد المنتجات',
+  offers_card: 'بطاقة العروض الحصرية',
+  support_card: 'بطاقة المساعدة',
+} as const;
+
+export type HomeSectionId = keyof typeof HOME_SECTION_LABELS;
+
+export const COMPONENT_LABELS = {
+  search_bar: 'شريط البحث',
+  category_rail: 'شريط التصنيفات',
+  product_badge: 'شارة نصف الكرتون على المنتج',
+  product_unit_label: 'سطر السعر والوحدة على البطاقة',
+  product_qty_controls: 'أزرار + و - على البطاقة',
+} as const;
+
+export type ComponentId = HomeSectionId | keyof typeof COMPONENT_LABELS;
+
+export const ALL_COMPONENT_LABELS: Record<ComponentId, string> = { ...HOME_SECTION_LABELS, ...COMPONENT_LABELS };
+
+export type DesignSettings = {
+  id: number;
+  primary_color: string;
+  active_color: string;
+  button_color: string;
+  badge_color: string;
+  font_family: FontFamilyName;
+  body_weight: 400 | 500 | 600;
+  bold_weight: 700 | 800 | 900;
+  heading_scale: number;
+  body_scale: number;
+  button_scale: number;
+  nav_order: BottomTab[];
+  home_section_order: HomeSectionId[];
+  hidden_components: ComponentId[];
+  product_layout: 'grid' | 'list';
+  updated_at: string;
+};
+
+export const DEFAULT_DESIGN_SETTINGS: DesignSettings = {
+  id: 1,
+  primary_color: '#059669',
+  active_color: '#047857',
+  button_color: '#3B82F6',
+  badge_color: '#f97316',
+  font_family: 'Tajawal',
+  body_weight: 400,
+  bold_weight: 700,
+  heading_scale: 1,
+  body_scale: 1,
+  button_scale: 1,
+  nav_order: ['home', 'offers', 'store', 'orders', 'profile'],
+  home_section_order: ['banner', 'stats', 'offers_card', 'support_card'],
+  hidden_components: [],
+  product_layout: 'grid',
+  updated_at: new Date(0).toISOString(),
+};
 
 export type AppSettings = {
   id: number;

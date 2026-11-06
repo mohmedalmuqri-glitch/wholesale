@@ -4,10 +4,12 @@ import { Storefront } from '@/components/Storefront';
 import { Admin } from '@/components/Admin';
 import { AdminGate } from '@/components/AdminGate';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useDesignSettings } from '@/hooks/useDesignSettings';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
   const route = useHashRoute();
+  const design = useDesignSettings();
   const { categories, products, offerCategories, loading, error, refresh } = useSupabaseData();
 
   // If we have cached data, show the UI immediately with a subtle refresh indicator
@@ -44,7 +46,7 @@ export default function App() {
           <Admin categories={categories} products={products} offerCategories={offerCategories} onRefresh={refresh} />
         </AdminGate>
       ) : (
-        <Storefront categories={categories} products={products} offerCategories={offerCategories} />
+        <Storefront categories={categories} products={products} offerCategories={offerCategories} design={design} />
       )}
     </ToastProvider>
   );

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Fragment, useMemo, useState, useEffect, useCallback } from 'react';
 import {
   Bell,
   CircleHelp,
@@ -8,15 +8,16 @@ import {
   Package,
   Check,
 } from 'lucide-react';
-import type { AppBanner, CartItem, Category, CartUnit, Customer, OfferCategory, Product } from '@/types';
-import { CART_BLUE, STORAGE_KEYS } from '@/types';
+import type { AppBanner, BottomTab, CartItem, Category, CartUnit, ComponentId, Customer, DesignSettings, HomeSectionId, OfferCategory, Product } from '@/types';
+import { STORAGE_KEYS } from '@/types';
 import { formatSAR } from '@/utils';
 import { CartDrawer } from './CartDrawer';
 import { OrdersTab } from './OrdersTab';
 import { ProfileTab } from './ProfileTab';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from './Toast';
-import { BottomNav, type BottomTab } from './BottomNav';
+import { BottomNav } from './BottomNav';
+import { ProductCard } from './ProductCard';
 import { fetchSettings } from '@/lib/db';
 import { CategoryRail } from './CategoryRail';
 import { supabase } from '@/lib/supabase';
@@ -30,9 +31,10 @@ type StorefrontProps = {
   categories: Category[];
   products: Product[];
   offerCategories: OfferCategory[];
+  design: DesignSettings;
 };
 
-export function Storefront({ categories, products, offerCategories }: StorefrontProps) {
+export function Storefront({ categories, products, offerCategories, design }: StorefrontProps) {
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<BottomTab>('home');
@@ -48,6 +50,7 @@ export function Storefront({ categories, products, offerCategories }: Storefront
   const [unreadCount, setUnreadCount] = useState(0);
   const { notify } = useToast();
   const { banners } = useBanners();
+  const hidden = new Set<ComponentId>(design.hidden_components);
 
   // Load customer data when customerId is available
   const refreshCustomer = useCallback(async () => {
@@ -129,6 +132,8 @@ export function Storefront({ categories, products, offerCategories }: Storefront
   }, [products, activeCat, query]);
 
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
+  const fullQtyOf = (productId: string) =>
+    cart.find((i) => i.productId === productId && i.unit === 'full')?.qty ?? 0;
 
   const addFullCarton = (productId: string) => {
     setCart((prev) => {
@@ -212,8 +217,7 @@ export function Storefront({ categories, products, offerCategories }: Storefront
             </span>
           </button>
 
-          {activeTab === 'store' && (
-            <div className="flex-1 min-w-0">
+          {activeTab === 'store' && !hidden.has('category_rail') && (
               <CategoryRail categories={categories} activeCat={activeCat} onSelect={setActiveCat} />
             </div>
           )}
@@ -257,8 +261,7 @@ export function Storefront({ categories, products, offerCategories }: Storefront
         </div>
       </header>
 
-      {activeTab === 'store' && (
-        <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6">
+      {activeTab === 'store' && !hidden.has('search_bar') && (
           <div className="relative mb-2">
             <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sand-400" />
             <input

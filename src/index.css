@@ -11,12 +11,28 @@ html {
 }
 
 body {
-  font-family: 'Tajawal', 'Cairo', system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-weight: var(--weight-body, 400);
   background-color: #f7f7f6;
   color: #1c1917;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Typography scale: body text, headings and buttons follow the admin design settings */
+.text-xs { font-size: calc(0.75rem * var(--scale-body, 1)); }
+.text-sm { font-size: calc(0.875rem * var(--scale-body, 1)); }
+.text-base { font-size: calc(1rem * var(--scale-body, 1)); }
+.text-lg { font-size: calc(1.125rem * var(--scale-heading, 1)); }
+.text-xl { font-size: calc(1.25rem * var(--scale-heading, 1)); }
+.text-2xl { font-size: calc(1.5rem * var(--scale-heading, 1)); }
+.text-3xl { font-size: calc(1.875rem * var(--scale-heading, 1)); }
+.text-4xl { font-size: calc(2.25rem * var(--scale-heading, 1)); }
+button.text-xs { font-size: calc(0.75rem * var(--scale-button, 1)); }
+button.text-sm { font-size: calc(0.875rem * var(--scale-button, 1)); }
+button.text-base { font-size: calc(1rem * var(--scale-button, 1)); }
+.font-medium, .font-normal { font-weight: var(--weight-body, 400); }
+.font-semibold, .font-bold, .font-extrabold, .font-black { font-weight: var(--weight-bold, 700); }
 
 /* Hide number input spinners */
 input[type='number']::-webkit-outer-spin-button,
