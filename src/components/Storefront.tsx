@@ -218,6 +218,7 @@ export function Storefront({ categories, products, offerCategories, design }: St
           </button>
 
           {activeTab === 'store' && !hidden.has('category_rail') && (
+            <div className="flex-1 min-w-0">
               <CategoryRail categories={categories} activeCat={activeCat} onSelect={setActiveCat} />
             </div>
           )}
@@ -231,7 +232,7 @@ export function Storefront({ categories, products, offerCategories, design }: St
             >
               <Bell size={18} />
               {unreadCount > 0 && (
-                <span className="absolute -left-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-orange-500 px-1 text-[10px] font-bold text-white animate-pop-in">
+                <span className="absolute -left-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-theme-badge px-1 text-[10px] font-bold text-white animate-pop-in">
                   {unreadCount}
                 </span>
               )}
@@ -252,7 +253,7 @@ export function Storefront({ categories, products, offerCategories, design }: St
             >
               <ShoppingCart size={18} />
               {cartCount > 0 && (
-                <span className="absolute -left-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-orange-500 px-1 text-[10px] font-bold text-white animate-pop-in">
+                <span className="absolute -left-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-theme-badge px-1 text-[10px] font-bold text-white animate-pop-in">
                   {cartCount}
                 </span>
               )}
@@ -262,6 +263,7 @@ export function Storefront({ categories, products, offerCategories, design }: St
       </header>
 
       {activeTab === 'store' && !hidden.has('search_bar') && (
+        <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6">
           <div className="relative mb-2">
             <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sand-400" />
             <input
@@ -280,6 +282,7 @@ export function Storefront({ categories, products, offerCategories, design }: St
         <HomeTab
           productsCount={products.length}
           banners={banners.home}
+          design={design}
           onShop={() => setActiveTab('store')}
           onOffers={() => setActiveTab('offers')}
           onSupport={() => notify('يسعدنا مساعدتك، تواصل معنا عبر صفحة الدعم')}
@@ -297,55 +300,20 @@ export function Storefront({ categories, products, offerCategories, design }: St
           {filtered.length === 0 ? (
             <EmptyState query={query} hasProducts={products.length > 0} />
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className={design.product_layout === 'list' ? 'flex flex-col gap-3' : 'grid grid-cols-2 gap-3 sm:gap-4'}>
               {filtered.map((product) => (
-                <article
+                <ProductCard
                   key={product.id}
-                  className="group bg-white rounded-2xl border border-sand-200 overflow-hidden shadow-card hover:shadow-soft transition-all duration-300 flex flex-col animate-fade-in"
-                >
-                  <div className="relative aspect-square bg-white overflow-hidden">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-sand-200">
-                        <Package size={64} strokeWidth={1} />
-                      </div>
-                    )}
-                    {product.half_carton_enabled && (
-                      <span className="absolute top-2 left-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                        متاح نصف كرتون
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="p-3 flex flex-col flex-1 gap-2">
-                    <h3 className="text-sm font-bold text-sand-800 leading-snug line-clamp-2 min-h-[2.5rem]">
-                      {product.name}
-                    </h3>
-                    <div className="mt-auto">
-                      <span className="block text-base font-extrabold text-brand-700 leading-none">
-                        {formatSAR(product.price)}
-                      </span>
-                      <span className="text-[11px] text-sand-400 mt-1 block">
-                        {product.full_carton_units
-                          ? `السعر للكرتون (${product.full_carton_units} حبة)`
-                          : 'السعر للكرتون'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleAddClick(product)}
-                      style={{ backgroundColor: CART_BLUE }}
-                      className="w-full h-9 rounded-full hover:brightness-110 active:scale-95 text-white font-bold text-xs transition-all shadow-soft"
-                    >
-                      إضافة للسلة
-                    </button>
-                  </div>
-                </article>
+                  product={product}
+                  layout={design.product_layout}
+                  showBadge={!hidden.has('product_badge')}
+                  showUnitLabel={!hidden.has('product_unit_label')}
+                  showQtyControls={!hidden.has('product_qty_controls')}
+                  fullQty={fullQtyOf(product.id)}
+                  onAddClick={() => handleAddClick(product)}
+                  onInc={() => inc(product.id, 'full')}
+                  onDec={() => dec(product.id, 'full')}
+                />
               ))}
             </div>
           )}
@@ -356,7 +324,7 @@ export function Storefront({ categories, products, offerCategories, design }: St
         <ProfileTab customer={customer} onSaved={handleCustomerSaved} />
       )}
 
-      <BottomNav activeTab={activeTab} onChange={setActiveTab} hideOffers={hideOffers} />
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} order={design.nav_order} hideOffers={hideOffers} />
 
       <CartDrawer
         open={cartOpen}
@@ -398,76 +366,106 @@ export function Storefront({ categories, products, offerCategories, design }: St
 function HomeTab({
   productsCount,
   banners,
+  design,
   onShop,
   onOffers,
   onSupport,
 }: {
   productsCount: number;
   banners: AppBanner[];
+  design: DesignSettings;
   onShop: () => void;
   onOffers: () => void;
   onSupport: () => void;
 }) {
+  const hidden = new Set<ComponentId>(design.hidden_components);
+  const visibleSections = design.home_section_order.filter((id) => !hidden.has(id));
+
+  const renderSection = (id: HomeSectionId) => {
+    switch (id) {
+      case 'banner':
+        return banners.length > 0 ? (
+          <div className="col-span-full">
+            <BannerDisplay banners={banners} onShop={onShop} />
+          </div>
+        ) : (
+          <HeroFallback className="col-span-full" onShop={onShop} />
+        );
+      case 'stats':
+        return (
+          <div className="rounded-2xl border border-sand-200 bg-white p-4 shadow-card">
+            <p className="text-2xl font-extrabold text-brand-700">{productsCount}</p>
+            <p className="mt-1 text-xs font-bold text-sand-500">منتج متاح</p>
+          </div>
+        );
+      case 'offers_card':
+        return (
+          <button
+            type="button"
+            onClick={onOffers}
+            className="rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-orange-300"
+          >
+            <Percent className="text-orange-500" size={22} />
+            <p className="mt-2 text-xs font-bold text-sand-700">العروض الحصرية</p>
+          </button>
+        );
+      case 'support_card':
+        return (
+          <button
+            type="button"
+            onClick={onSupport}
+            className="col-span-2 rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-orange-300 sm:col-span-1"
+          >
+            <CircleHelp className="text-orange-500" size={22} />
+            <p className="mt-2 text-xs font-bold text-sand-700">تحتاج مساعدة؟</p>
+          </button>
+        );
+    }
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-4 pb-32 sm:px-6">
-      {/* Dynamic banner or fallback hero */}
-      {banners.length > 0 ? (
-        <BannerDisplay banners={banners} onShop={onShop} />
-      ) : (
-        <section className="relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft">
-          <img
-            src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"
-          />
-          <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
-          <div className="relative flex min-h-[250px] flex-col justify-center p-6 text-white sm:p-10">
-            <span className="mb-4 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold text-orange-200">
-              منصة شعوب للتجارة
-            </span>
-            <h1 className="max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-              كل احتياجاتك بالجملة، في مكان واحد
-            </h1>
-            <p className="mt-3 max-w-sm text-sm leading-7 text-white/75">
-              اكتشف المنتجات، اطلب بسهولة، وتابع طلباتك من البداية حتى التوصيل.
-            </p>
-            <button
-              type="button"
-              onClick={onShop}
-              className="mt-6 flex h-11 w-fit items-center rounded-full bg-orange-500 px-6 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
-            >
-              ابدأ التسوق
-            </button>
-          </div>
-        </section>
-      )}
-
-      <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-sand-200 bg-white p-4 shadow-card">
-          <p className="text-2xl font-extrabold text-brand-700">{productsCount}</p>
-          <p className="mt-1 text-xs font-bold text-sand-500">منتج متاح</p>
-        </div>
-        <button
-          type="button"
-          onClick={onOffers}
-          className="rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-orange-300"
-        >
-          <Percent className="text-orange-500" size={22} />
-          <p className="mt-2 text-xs font-bold text-sand-700">العروض الحصرية</p>
-        </button>
-        <button
-          type="button"
-          onClick={onSupport}
-          className="col-span-2 rounded-2xl border border-sand-200 bg-white p-4 text-right shadow-card transition hover:border-orange-300 sm:col-span-1"
-        >
-          <CircleHelp className="text-orange-500" size={22} />
-          <p className="mt-2 text-xs font-bold text-sand-700">تحتاج مساعدة؟</p>
-        </button>
+      <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {visibleSections.map((id) => (
+          <Fragment key={id}>{renderSection(id)}</Fragment>
+        ))}
       </section>
     </main>
   );
 }
+
+function HeroFallback({ className = '', onShop }: { className?: string; onShop: () => void }) {
+  return (
+    <section className={`relative mt-4 min-h-[250px] overflow-hidden rounded-[28px] bg-[#0f3155] shadow-soft ${className}`}>
+      <img
+        src="/Screenshot_٢٠٢٦٠٩٢٠-٠٠٠٨٠٢_Gallery.jpg"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover opacity-[0.12] mix-blend-screen"
+      />
+      <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="relative flex min-h-[250px] flex-col justify-center p-6 text-white sm:p-10">
+        <span className="mb-4 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold text-orange-200">
+          منصة شعوب للتجارة
+        </span>
+        <h1 className="max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+          كل احتياجاتك بالجملة، في مكان واحد
+        </h1>
+        <p className="mt-3 max-w-sm text-sm leading-7 text-white/75">
+          اكتشف المنتجات، اطلب بسهولة، وتابع طلباتك من البداية حتى التوصيل.
+        </p>
+        <button
+          type="button"
+          onClick={onShop}
+          className="mt-6 flex h-11 w-fit items-center rounded-full bg-theme-button px-6 text-sm font-extrabold text-white shadow-lg transition hover:brightness-110 active:scale-95"
+        >
+          ابدأ التسوق
+        </button>
+      </div>
+    </section>
+  );
+}
+
 
 /* ---------------- Offers tab ---------------- */
 
@@ -561,7 +559,7 @@ function BannerDisplay({
             <button
               type="button"
               onClick={onShop}
-              className="flex h-10 items-center rounded-full bg-orange-500 px-5 text-sm font-extrabold text-white shadow-lg transition hover:bg-orange-600 active:scale-95"
+              className="flex h-10 items-center rounded-full bg-theme-button px-5 text-sm font-extrabold text-white shadow-lg transition hover:brightness-110 active:scale-95"
             >
               تسوّق الآن
             </button>
@@ -654,8 +652,7 @@ function ChoiceModal({
           </button>
           <button
             onClick={onConfirm}
-            style={{ backgroundColor: CART_BLUE }}
-            className="flex-[2] h-11 rounded-full hover:brightness-110 text-white font-bold text-sm transition-all shadow-soft"
+            className="flex-[2] h-11 rounded-full bg-theme-button hover:brightness-110 text-white font-bold text-sm transition-all shadow-soft"
           >
             تأكيد الإضافة للسلة
           </button>
