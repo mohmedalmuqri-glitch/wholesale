@@ -30,10 +30,12 @@ import {
   Download,
   MessageCircle,
   Minus,
+  Palette,
   Settings,
 } from 'lucide-react';
 import type { Category, Customer, OfferCategory, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 import { AdminSettingsTab } from './AdminSettingsTab';
+import { DesignSettingsTab } from './DesignSettingsTab';
 import { BannerSlidesAdminTab } from './BannerSlidesAdminTab';
 import { OfferManagementTab } from './OfferManagementTab';
 import { CustomersAdminTab as CustomersManagementTab } from './CustomersAdminTab';
@@ -95,7 +97,7 @@ const EMPTY_DRAFT: ProductDraft = {
 };
 
 export function Admin({ categories, products, onRefresh, offerCategories }: AdminProps) {
-  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'offers' | 'banners' | 'notifications' | 'settings'>('products');
+  const [tab, setTab] = useState<'products' | 'batch' | 'categories' | 'orders' | 'customers' | 'offers' | 'banners' | 'notifications' | 'settings' | 'design'>('products');
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -276,6 +278,9 @@ export function Admin({ categories, products, onRefresh, offerCategories }: Admi
           <TabButton active={tab === 'notifications'} onClick={() => setTab('notifications')} icon={<Bell size={18} />}>
             الإشعارات
           </TabButton>
+          <TabButton active={tab === 'design'} onClick={() => setTab('design')} icon={<Palette size={18} />}>
+            التصميم
+          </TabButton>
           <TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={<Settings size={18} />}>
             الإعدادات
           </TabButton>
@@ -303,6 +308,8 @@ export function Admin({ categories, products, onRefresh, offerCategories }: Admi
           <BannerSlidesAdminTab />
         ) : tab === 'notifications' ? (
           <NotificationsAdminTab />
+        ) : tab === 'design' ? (
+          <DesignSettingsTab />
         ) : tab === 'settings' ? (
           <AdminSettingsTab />
         ) : (
