@@ -2,7 +2,7 @@ import { Minus, Package, Plus } from 'lucide-react';
 import type { Product } from '@/types';
 import { formatSAR } from '@/utils';
 
-export type ProductCardOptions = {
+type ProductCardOptions = {
   layout: 'grid' | 'list';
   showBadge: boolean;
   showUnitLabel: boolean;
