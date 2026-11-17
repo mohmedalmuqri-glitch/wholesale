@@ -107,6 +107,12 @@ export type Delegate = {
   created_at: string;
 };
 
+export type DriverSession = {
+  id: string;
+  name: string;
+  zoneId: string | null;
+};
+
 export type CartUnit = 'full' | 'half';
 
 export type CartItem = {

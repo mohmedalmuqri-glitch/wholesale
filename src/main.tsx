@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { DriverPortal } from '@/components/driver/DriverPortal';
 import './index.css';
 
 if ('serviceWorker' in navigator) {
@@ -11,8 +12,10 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+const isDriverPortal = window.location.pathname.startsWith('/driver');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {isDriverPortal ? <DriverPortal /> : <App />}
   </StrictMode>
 );

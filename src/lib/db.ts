@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, DesignSettings, GeographicZone, Notification, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
+import type { AppBanner, AppSettings, BannerId, Category, Customer, Delegate, DesignSettings, DriverSession, GeographicZone, Notification, Order, OrderItem, OrderStatus, PaymentMethod, Product } from '@/types';
 import { DEFAULT_DESIGN_SETTINGS } from '@/types';
 
 /* ---------------- Products ---------------- */
@@ -232,20 +232,41 @@ export async function deleteGeographicZone(id: string): Promise<void> {
   if (error) throw error;
 }
 
+const DELEGATE_COLUMNS = 'id, name, phone, zone_id, created_at';
+
 export async function fetchDelegates(): Promise<Delegate[]> {
-  const { data, error } = await supabase.from('delegates').select('*').order('created_at', { ascending: true });
+  const { data, error } = await supabase
+    .from('delegates')
+    .select(DELEGATE_COLUMNS)
+    .order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []) as Delegate[];
 }
 
-export async function insertDelegate(name: string, phone: string, zoneId: string): Promise<Delegate | null> {
-  const { data, error } = await supabase
-    .from('delegates')
-    .insert({ name, phone, zone_id: zoneId || null })
-    .select('*')
-    .maybeSingle();
+const DELEGATE_ERROR_MESSAGES: Record<string, string> = {
+  invalid_name: 'أدخل اسم المندوب',
+  invalid_phone: 'أدخل رقم جوال المندوب',
+  invalid_pin: 'الرمز السري يجب أن يكون من 4 إلى 6 أرقام',
+};
+
+export async function createDelegate(name: string, phone: string, zoneId: string, pin: string): Promise<void> {
+  const { error } = await supabase.rpc('create_delegate', {
+    p_name: name,
+    p_phone: phone,
+    p_zone_id: zoneId || null,
+    p_pin: pin,
+  });
+  if (error) {
+    throw new Error(DELEGATE_ERROR_MESSAGES[error.message] ?? 'فشل إضافة المندوب');
+  }
+}
+
+export async function loginDriver(phone: string, pin: string): Promise<DriverSession | null> {
+  const { data, error } = await supabase.rpc('driver_login', { p_phone: phone, p_pin: pin });
   if (error) throw error;
-  return data as Delegate | null;
+  const row = (data ?? [])[0] as { delegate_id: string; delegate_name: string; delegate_zone_id: string | null } | undefined;
+  if (!row) return null;
+  return { id: row.delegate_id, name: row.delegate_name, zoneId: row.delegate_zone_id };
 }
 
 export async function deleteDelegate(id: string): Promise<void> {

@@ -19,7 +19,7 @@ import {
   fetchAllOrders,
   insertGeographicZone,
   deleteGeographicZone,
-  insertDelegate,
+  createDelegate,
   deleteDelegate,
 } from '@/lib/db';
 import { useToast } from './Toast';
@@ -179,6 +179,7 @@ function DelegatesManager() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [zoneId, setZoneId] = useState('');
+  const [pin, setPin] = useState('');
 
   const load = () => {
     Promise.all([fetchDelegates(), fetchGeographicZones(), fetchAllOrders(), fetchAllCustomers()])
@@ -218,12 +219,14 @@ function DelegatesManager() {
   const addDelegate = async () => {
     if (!name.trim()) return notify('أدخل اسم المندوب', 'error');
     if (!zoneId) return notify('اختر المربع الجغرافي', 'error');
+    if (!/^[0-9]{4,6}$/.test(pin)) return notify('الرمز السري يجب أن يكون من 4 إلى 6 أرقام', 'error');
     setSaving(true);
     try {
-      await insertDelegate(name.trim(), phone.trim(), zoneId);
+      await createDelegate(name.trim(), phone.trim(), zoneId, pin);
       setName('');
       setPhone('');
       setZoneId('');
+      setPin('');
       notify('تمت إضافة المندوب');
       load();
     } catch (err) {
@@ -260,7 +263,7 @@ function DelegatesManager() {
           <Bike size={18} className="text-brand-600" />
           إضافة مندوب جديد
         </h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <input
             type="text"
             value={name}
@@ -275,6 +278,17 @@ function DelegatesManager() {
             placeholder="رقم الجوال"
             dir="ltr"
             className="h-11 rounded-xl bg-sand-50 border border-sand-200 focus:border-brand-500 px-3 text-sm outline-none text-right"
+          />
+          <input
+            type="password"
+            inputMode="numeric"
+            autoComplete="new-password"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+            placeholder="الرمز السري (4-6 أرقام)"
+            dir="ltr"
+            className="h-11 rounded-xl bg-sand-50 border border-sand-200 focus:border-brand-500 px-3 text-sm outline-none text-right tracking-widest"
           />
           <select
             value={zoneId}
