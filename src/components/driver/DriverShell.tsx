@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Bike, LogOut } from 'lucide-react';
 import type { DriverSession } from '@/types';
 import { DRIVER_TAB_LABELS, DriverBottomNav, type DriverTab } from './DriverBottomNav';
+import { DriverOrdersPage } from './DriverOrdersPage';
+import { DriverMorePage } from './DriverMorePage';
 
 type DriverShellProps = {
   session: DriverSession;
@@ -36,8 +38,8 @@ export function DriverShell({ session, onLogout }: DriverShellProps) {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-xl font-extrabold text-sand-900">{DRIVER_TAB_LABELS[tab]}</h1>
-        <div className="mt-6 flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-sand-300 bg-white" />
+        <h1 className="mb-5 text-xl font-extrabold text-sand-900">{DRIVER_TAB_LABELS[tab]}</h1>
+        {tab === 'orders' ? <DriverOrdersPage session={session} /> : <DriverMorePage session={session} />}
       </main>
 
       <DriverBottomNav activeTab={tab} onChange={setTab} />
